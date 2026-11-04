@@ -47,6 +47,33 @@ public sealed class IdentityLogRedactionTests
         Assert.Contains(PersonalDataRedactionEnricher.Mask, rendered, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Local_account_credentials_never_reach_logs()
+    {
+        const string userName = "sentinel_local_account";
+        const string password = "Sentinel-Password-123";
+        const string hash = "pbkdf2-sha256$600000$c2VudGluZWw=$c2VudGluZWxoYXNo";
+        using var sink = new InMemorySink();
+        using var logger = new LoggerConfiguration()
+            .Enrich.With<PersonalDataRedactionEnricher>()
+            .WriteTo.Sink(sink)
+            .CreateLogger();
+
+        logger.ForContext("userName", userName)
+            .Information("Sign-in {@Request}", new Dictionary<string, object>
+            {
+                ["userName"] = userName,
+                ["password"] = password,
+                ["passwordHash"] = hash,
+            });
+
+        var rendered = string.Join('\n', sink.Events.Select(value =>
+            value.RenderMessage() + ' ' + string.Join(' ', value.Properties.Select(property => property.Value))));
+        Assert.DoesNotContain(userName, rendered, StringComparison.Ordinal);
+        Assert.DoesNotContain(password, rendered, StringComparison.Ordinal);
+        Assert.DoesNotContain(hash, rendered, StringComparison.Ordinal);
+    }
+
     private sealed class InMemorySink : ILogEventSink, IDisposable
     {
         private readonly ConcurrentQueue<LogEvent> events = new();

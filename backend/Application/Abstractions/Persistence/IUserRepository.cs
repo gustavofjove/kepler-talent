@@ -45,6 +45,9 @@ public interface IUserRepository
     /// </summary>
     Task<User?> FindByEmailAsync(string email, CancellationToken cancellationToken);
 
+    /// <summary>The password sign-in lookup (KTL-45), on the unique user-name index.</summary>
+    Task<User?> FindByUserNameAsync(string userName, CancellationToken cancellationToken);
+
     /// <summary>
     /// How many active users hold a role that grants the given permission, excluding one user.
     /// The last-administrator invariant asks this inside the write transaction, so that two

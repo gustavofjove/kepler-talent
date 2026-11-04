@@ -41,6 +41,12 @@ public sealed class DevelopmentTokenIssuer
     /// Builds the key the issuer signs with and the bearer handler validates against, so the two
     /// cannot disagree about what a valid development token looks like.
     /// </summary>
+    /// <summary>
+    /// The <c>kid</c> this issuer signs with. Distinct from the local-account issuer's, so a token
+    /// naming one issuer cannot validate against the other's key (KTL-45 design D1).
+    /// </summary>
+    public const string KeyId = "ktl-development";
+
     public static SymmetricSecurityKey SigningKey(DevelopmentIssuerOptions options)
     {
         var key = options.SigningKey ?? string.Empty;
@@ -51,7 +57,7 @@ public sealed class DevelopmentTokenIssuer
                 $"Authentication:DevelopmentIssuer:SigningKey must be at least "
                 + $"{DevelopmentIssuerOptions.MinimumSigningKeyBytes} bytes.");
         }
-        return new SymmetricSecurityKey(bytes);
+        return new SymmetricSecurityKey(bytes) { KeyId = KeyId };
     }
 
     /// <summary>

@@ -15,13 +15,21 @@ services:
   migrator:
     environment:
       ConnectionStrings__ApplicationDatabase: Host=${KTL_DB_HOST:-hts-postgres};Port=5432;Database=kepler_talento;Username=ktl_migrator;Password=${KTL_MIGRATOR_PASSWORD:?KTL_MIGRATOR_PASSWORD is required}
+      # KTL-45: the two generic accounts keep the names and roles of the root file; only their
+      # passwords change, and they come from ktl.env, never from this repository. Changing one
+      # there and redeploying rotates it.
+      Authentication__LocalAccounts__Seed__0__Password: ${KTL_RRHH_ADMIN_PASSWORD:?KTL_RRHH_ADMIN_PASSWORD is required}
+      Authentication__LocalAccounts__Seed__1__Password: ${KTL_RRHH_USER_PASSWORD:?KTL_RRHH_USER_PASSWORD is required}
     depends_on: !reset {}
     networks: [lan_data]
 
   api:
     environment:
       ConnectionStrings__ApplicationDatabase: Host=${KTL_DB_HOST:-hts-postgres};Port=5432;Database=kepler_talento;Username=ktl_runtime;Password=${KTL_RUNTIME_PASSWORD:?KTL_RUNTIME_PASSWORD is required}
-      Authentication__DevelopmentIssuer__SigningKey: ${KTL_DEV_SIGNING_KEY:?KTL_DEV_SIGNING_KEY is required}
+      # KTL-45: visitors sign in with a user name and password. The development issuer, which
+      # would mint a token for anyone who asks, is switched off, so /api/dev/token is unmapped.
+      Authentication__DevelopmentIssuer__Enabled: 'false'
+      Authentication__LocalAccounts__SigningKey: ${KTL_AUTH_SIGNING_KEY:?KTL_AUTH_SIGNING_KEY is required}
       # No scanner on the server yet: uploads are marked clean unscanned (refused in Production).
       # Set KTL_CLAMAV_BYPASS=false and KTL_CLAMAV_HOST once a shared ClamAV is reachable.
       ClamAv__Bypass: ${KTL_CLAMAV_BYPASS:-true}
@@ -33,9 +41,10 @@ services:
 
   nginx:
     environment:
-      # Signs every visitor in through the development token issuer as the bootstrap
-      # administrator. This server holds fabricated demo data only.
+      # KTL-45: the username/password form. This server still holds fabricated demo data only,
+      # and serves plain HTTP: credentials cross the LAN unencrypted.
       APP_ENV: test
+      AUTH_MODE: password
     # Nginx Proxy Manager is the only container on the server that publishes host ports.
     ports: !reset []
     networks:

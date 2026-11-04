@@ -6,9 +6,14 @@
 //   npm run seed:demo -- --base-url http://localhost:4300
 //   npm run seed:demo -- --no-cvs           (skip the synthetic CV uploads)
 //   npm run seed:demo -- --remove           (withdraw the dataset)
+//   KTL_SEED_USER=rrhh_admin KTL_SEED_PASSWORD=... npm run seed:demo
+//                                           (KTL-45: a target with password sign-in only)
 //
 // Guards: the target must be loopback, and it must issue a development token (never mapped in
-// Production). Writes go through the normal permission checks, validation, encryption and audit.
+// Production) unless a user name and password are given explicitly, in which case it signs in
+// through /api/auth/token as that account. The password is never printed; prefer the
+// environment variable to --password, which shows in the process list and shell history.
+// Writes go through the normal permission checks, validation, encryption and audit.
 // A re-run creates only what is missing. Nothing personal is printed - counts only.
 // See docs/ktl-40/demo-data.md.
 const { parseArgs } = require('node:util');
@@ -25,13 +30,22 @@ const { values: options } = parseArgs({
     'base-url': { type: 'string', default: process.env.KTL_API_BASE || 'http://localhost:4200' },
     remove: { type: 'boolean', default: false },
     'no-cvs': { type: 'boolean', default: false },
+    user: { type: 'string', default: process.env.KTL_SEED_USER || '' },
+    password: { type: 'string', default: process.env.KTL_SEED_PASSWORD || '' },
     help: { type: 'boolean', short: 'h', default: false },
   },
 });
 
 if (options.help) {
-  console.log('Usage: node scripts/seed-demo-data.js [--base-url <url>] [--no-cvs] [--remove]');
+  console.log(
+    'Usage: node scripts/seed-demo-data.js [--base-url <url>] [--no-cvs] [--remove] [--user <name> --password <password>]',
+  );
   process.exit(0);
+}
+
+if (Boolean(options.user) !== Boolean(options.password)) {
+  console.error('A user name and a password go together: give both, or neither.');
+  process.exit(1);
 }
 
 /** The checked target; set by `main` before any request is sent. */
@@ -68,6 +82,19 @@ async function api(method, route, body, { allow = [] } = {}) {
 }
 
 async function signIn() {
+  if (options.user) {
+    try {
+      const { data } = await api('POST', '/api/auth/token', {
+        userName: options.user,
+        password: options.password,
+      });
+      token = data.accessToken;
+    } catch (error) {
+      // The error names the route and status only; the credentials stay out of the message.
+      throw new Error(`Password sign-in refused by ${base.origin} (${error.message})`);
+    }
+    return;
+  }
   try {
     const { data } = await api('POST', '/api/dev/token', DEV_ADMIN);
     token = data.accessToken;

@@ -54,6 +54,101 @@ public sealed class KeplerAuthenticationOptions
     /// failure, not a warning.
     /// </summary>
     public DevelopmentIssuerOptions? DevelopmentIssuer { get; init; }
+
+    /// <summary>
+    /// The application's own user-name-and-password sign-in (KTL-45). Unlike the development
+    /// issuer it is allowed in Production, because it checks a credential instead of minting a
+    /// token for whoever asks.
+    /// </summary>
+    public LocalAccountsOptions? LocalAccounts { get; init; }
+}
+
+/// <summary>
+/// Local accounts: a signing key, the issuer the sign-in endpoint mints tokens as, and the
+/// accounts the migrator seeds. Validated at start-up (and the seed again in <c>--migrate</c>).
+/// </summary>
+public sealed class LocalAccountsOptions
+{
+    public bool Enabled { get; init; }
+
+    /// <summary>Symmetric HS256 key, at least 32 bytes and never the development issuer's.</summary>
+    public string? SigningKey { get; init; }
+
+    public string Issuer { get; init; } = "https://kepler-talento.local/accounts";
+
+    public string Audience { get; init; } = "kepler-talento-api";
+
+    /// <summary>A working day. There is no refresh token: an expired session signs in again.</summary>
+    public int TokenLifetimeMinutes { get; init; } = 480;
+
+    /// <summary>Sign-in attempts allowed per client address per minute, without queueing.</summary>
+    public int SignInAttemptsPerMinute { get; init; } = 10;
+
+    /// <summary>Accounts the migrator creates or re-hashes; see <c>DatabaseInitializer</c>.</summary>
+    public LocalAccountSeedOptions[] Seed { get; init; } = [];
+}
+
+public sealed class LocalAccountSeedOptions
+{
+    public string? UserName { get; init; }
+    public string? DisplayName { get; init; }
+    public string? Email { get; init; }
+    public string? RoleName { get; init; }
+    public string? Password { get; init; }
+}
+
+/// <summary>
+/// The values committed to <c>docker-compose.yml</c> for local development. Production refuses
+/// every one of them, as signing key or as password, so a copied compose file cannot open a real
+/// installation with a credential anyone can read on GitHub.
+/// </summary>
+public static class LocalAccountDefaults
+{
+    public static readonly IReadOnlySet<string> DevelopmentOnlyValues = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "development-only-local-accounts-key-change-me-32b",
+        "KeplerLocal-Admin-2026",
+        "KeplerLocal-User-2026",
+    };
+
+    /// <summary>
+    /// Why the options are unsafe, or <see langword="null"/> when they are fine. Shared by start-up
+    /// validation and the tests, so the two cannot drift.
+    /// </summary>
+    public static string? Problem(KeplerAuthenticationOptions options, bool isProduction)
+    {
+        var local = options.LocalAccounts;
+        if (local?.Enabled != true)
+        {
+            return null;
+        }
+        var key = local.SigningKey ?? string.Empty;
+        if (System.Text.Encoding.UTF8.GetByteCount(key) < DevelopmentIssuerOptions.MinimumSigningKeyBytes)
+        {
+            return $"Authentication:LocalAccounts:SigningKey must be at least {DevelopmentIssuerOptions.MinimumSigningKeyBytes} bytes.";
+        }
+        if (string.Equals(key, options.DevelopmentIssuer?.SigningKey, StringComparison.Ordinal))
+        {
+            return "Authentication:LocalAccounts:SigningKey must differ from the development issuer's key.";
+        }
+        if (string.Equals(local.Issuer, options.DevelopmentIssuer?.Issuer, StringComparison.Ordinal))
+        {
+            return "Authentication:LocalAccounts:Issuer must differ from the development issuer.";
+        }
+        if (local.TokenLifetimeMinutes is < 1 or > 24 * 60)
+        {
+            return "Authentication:LocalAccounts:TokenLifetimeMinutes must be between 1 and 1440.";
+        }
+        if (local.SignInAttemptsPerMinute is < 1 or > 1000)
+        {
+            return "Authentication:LocalAccounts:SignInAttemptsPerMinute must be between 1 and 1000.";
+        }
+        if (isProduction && DevelopmentOnlyValues.Contains(key))
+        {
+            return "Authentication:LocalAccounts:SigningKey is a development-only value and cannot be used in Production.";
+        }
+        return null;
+    }
 }
 
 public sealed class BootstrapAdministratorOptions

@@ -4,10 +4,11 @@
 HMS `dev` / `uat` / `test` stacks. Kepler reuses the server's PostgreSQL and Nginx Proxy Manager
 (NPM) and adds nothing to the HMS stacks.
 
-**What this environment is:** a test server for **fabricated demo data only**. Every visitor is
-signed in as the bootstrap administrator through the development token issuer, the traffic is
-plain HTTP, uploaded files are not scanned for malware (until a shared ClamAV exists), and nothing
-is backed up. Never load real candidates into it.
+**What this environment is:** a test server for **fabricated demo data only**. Visitors sign in
+with one of two generic accounts, `rrhh_admin` or `rrhh_user` (KTL-45), whose passwords live in
+the server's secrets. The traffic is plain HTTP, so those passwords cross the LAN unencrypted.
+Uploaded files are not scanned for malware (until a shared ClamAV exists), and nothing is backed
+up. Never load real candidates into it.
 
 **Effort:** about two hours for the first deploy, most of it the first image build.
 
@@ -82,19 +83,30 @@ images), as the HMS builds do. Capacity is not a concern: Kepler adds about 1 Gi
 
 ### Step 1: secrets
 
-Generate the passwords and the development-issuer signing key on the server. Hex values keep
-them safe inside connection strings.
+Generate the database passwords, the sign-in signing key and the two account passwords on the
+server. Hex values keep the database passwords safe inside connection strings.
 
 ```bash
 sudo install -d -m 700 -o "$USER" -g "$USER" /opt/apps/ktl-secrets
 cat > /opt/apps/ktl-secrets/ktl.env <<EOF
 KTL_MIGRATOR_PASSWORD=$(openssl rand -hex 24)
 KTL_RUNTIME_PASSWORD=$(openssl rand -hex 24)
-KTL_DEV_SIGNING_KEY=$(openssl rand -hex 32)
+KTL_AUTH_SIGNING_KEY=$(openssl rand -hex 32)
+KTL_RRHH_ADMIN_PASSWORD=$(openssl rand -base64 18)
+KTL_RRHH_USER_PASSWORD=$(openssl rand -base64 18)
 KTL_FIELD_KEYS_FILE=/opt/apps/ktl-secrets/field-keys.json
 EOF
 chmod 600 /opt/apps/ktl-secrets/ktl.env
 ```
+
+`KTL_RRHH_ADMIN_PASSWORD` and `KTL_RRHH_USER_PASSWORD` are the passwords of the two accounts HR
+signs in with (KTL-45). Each must have at least 12 characters, or the migrator refuses to finish.
+Read them back with `grep RRHH /opt/apps/ktl-secrets/ktl.env`, store them in the password manager,
+and hand them to HR from there. The database only ever holds their hashes.
+
+An installation set up before KTL-45 has `KTL_DEV_SIGNING_KEY` instead. Append the three new
+lines before the KTL-45 change reaches `main`
+([release notes](ktl-45/release-notes.md)); the old line can stay.
 
 Create and edit `ktl.env` on the server only. A copy edited on Windows ends its lines in CR:
 Compose strips it but the shell in Step 2 keeps it, so the roles get passwords the API never
@@ -181,7 +193,8 @@ git clone https://github.com/gustavofjove/kepler-talento.git /opt/apps/ktl
 ```
 
 The first build takes several minutes. `deploy.sh` runs one `docker compose up -d --build`: the
-migrator applies the migrations, seeds the catalogs and the bootstrap administrator, and exits;
+migrator applies the migrations, seeds the catalogs, the bootstrap administrator and the two
+local accounts, and exits;
 the API starts only after it succeeds, and nginx only after the API is healthy. The migrator log
 shows one `Failed executing DbCommand` on `__EFMigrationsHistory` on a brand-new database. That
 is EF Core probing for a table that does not exist yet; the migrations follow.
@@ -249,16 +262,24 @@ Add to each client's `C:\Windows\System32\drivers\etc\hosts`:
 ```
 
 With a LAN DNS server (router, Pi-hole, dnsmasq), one record `ktl.lan → <SERVER_IP>` replaces the
-hosts-file edits. Then open `http://ktl.lan`: it signs in as «Administrador local».
+hosts-file edits. Then open `http://ktl.lan`: it shows the «Usuario» / «Contraseña» form.
+
+- **`rrhh_admin`:** everything, including Catálogos, Usuarios, Roles and Importación.
+- **`rrhh_user`:** candidates and documents, with no Admin menu.
+
+`POST /api/dev/token` issues no token on this server, because the development issuer is off.
 
 ### Step 8: demo data
 
 `npm run seed:demo` only writes to a loopback address, and the server publishes no Kepler port.
 Run it in a Node container that shares nginx's network namespace, where `127.0.0.1:8080` _is_
-Kepler's nginx:
+Kepler's nginx. The server has no development issuer, so the script signs in as `rrhh_admin`,
+with the password passed through the environment rather than the command line:
 
 ```bash
+. /opt/apps/ktl-secrets/ktl.env
 docker run --rm --network container:ktl-nginx-1 -v /opt/apps/ktl/scripts:/scripts:ro \
+  -e KTL_SEED_USER=rrhh_admin -e KTL_SEED_PASSWORD="$KTL_RRHH_ADMIN_PASSWORD" \
   node:22.18.0-alpine3.22 node /scripts/seed-demo-data.js --base-url http://127.0.0.1:8080
 ```
 
@@ -341,6 +362,13 @@ Things to know:
   they return (`restart: unless-stopped`).
 - Changing a database password needs both `ALTER ROLE ... PASSWORD` in `hts-postgres` and the new
   value in `ktl.env`, then `deploy.sh --force`.
+- Changing an account password (`KTL_RRHH_ADMIN_PASSWORD`, `KTL_RRHH_USER_PASSWORD`) needs only
+  the new value in `ktl.env` and `deploy.sh --force`.
+  - The migrator re-hashes it, and the old password stops working.
+  - Sessions already open last until their token expires, at most 8 hours. Deactivate the account
+    in Usuarios to end them sooner.
+  - See [docs/ktl-45/authentication-local-accounts.md](ktl-45/authentication-local-accounts.md).
+- Changing `KTL_AUTH_SIGNING_KEY` signs everyone out at the next deploy.
 
 ---
 

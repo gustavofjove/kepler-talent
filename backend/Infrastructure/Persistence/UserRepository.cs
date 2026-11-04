@@ -41,6 +41,12 @@ public sealed class UserRepository(ApplicationDbContext dbContext) : IUserReposi
         return dbContext.Users.SingleOrDefaultAsync(user => user.Email == normalized, cancellationToken);
     }
 
+    public Task<User?> FindByUserNameAsync(string userName, CancellationToken cancellationToken)
+    {
+        var normalized = User.NormalizeUserName(userName);
+        return dbContext.Users.SingleOrDefaultAsync(user => user.UserName == normalized, cancellationToken);
+    }
+
     public async Task<int> CountActiveHoldersOfPermissionAsync(
         string permission,
         Guid? excludingUserId,

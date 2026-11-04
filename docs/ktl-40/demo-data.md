@@ -59,8 +59,12 @@ The output is counts only; it never prints a name, an e-mail or an id.
 
 - The target must be `localhost`, `127.0.0.1` or `::1`; anything else is refused before a request
   is sent.
-- It signs in only through `POST /api/dev/token` as the development administrator. That endpoint is
-  never mapped in Production, so the script cannot write anywhere else.
+- By default it signs in through `POST /api/dev/token` as the development administrator. That
+  endpoint is never mapped in Production, so by default the script cannot write anywhere else.
+- KTL-45: given `KTL_SEED_USER` and `KTL_SEED_PASSWORD` (or `--user` and `--password`), it instead
+  signs in through `POST /api/auth/token` as that account. This is for a target without the
+  development issuer, such as the LAN server. It never does this unasked, and it never prints the
+  password. The loopback rule above still applies.
 - It needs no database credential, and it is not part of any image, migration or container
   start-up.
 

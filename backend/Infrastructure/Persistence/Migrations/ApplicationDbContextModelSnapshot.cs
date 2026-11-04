@@ -941,6 +941,10 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("LastSignInAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("PasswordHash")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
                     b.Property<string>("RoleName")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -948,6 +952,10 @@ namespace Infrastructure.Persistence.Migrations
 
                     b.Property<DateTimeOffset>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
@@ -969,6 +977,11 @@ namespace Infrastructure.Persistence.Migrations
                     b.HasIndex("RoleName")
                         .HasDatabaseName("IX_ADM_Users_RoleName");
 
+                    b.HasIndex("UserName")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ADM_Users_UserName")
+                        .HasFilter("\"UserName\" IS NOT NULL");
+
                     b.ToTable("ADM_Users", null, t =>
                         {
                             t.HasCheckConstraint("CK_ADM_Users_DisplayName", "char_length(btrim(\"DisplayName\")) > 0");
@@ -977,7 +990,11 @@ namespace Infrastructure.Persistence.Migrations
 
                             t.HasCheckConstraint("CK_ADM_Users_ExternalSubject", "\"ExternalSubject\" IS NULL OR char_length(btrim(\"ExternalSubject\")) > 0");
 
+                            t.HasCheckConstraint("CK_ADM_Users_PasswordHash", "\"PasswordHash\" IS NULL OR \"UserName\" IS NOT NULL");
+
                             t.HasCheckConstraint("CK_ADM_Users_Timestamps", "\"UpdatedAtUtc\" >= \"CreatedAtUtc\" AND (\"LastSignInAtUtc\" IS NULL OR \"LastSignInAtUtc\" >= \"CreatedAtUtc\")");
+
+                            t.HasCheckConstraint("CK_ADM_Users_UserName", "\"UserName\" IS NULL OR \"UserName\" ~ '^[a-z0-9._-]{3,64}$'");
                         });
                 });
 

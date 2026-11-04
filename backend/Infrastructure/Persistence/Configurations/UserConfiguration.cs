@@ -15,6 +15,7 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
     public const string UniqueSubjectIndex = "UX_ADM_Users_ExternalSubject";
     public const string UniqueEmailIndex = "UX_ADM_Users_Email";
     public const string RoleNameIndex = "IX_ADM_Users_RoleName";
+    public const string UniqueUserNameIndex = "UX_ADM_Users_UserName";
 
     public void Configure(EntityTypeBuilder<User> builder)
     {
@@ -33,12 +34,23 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             table.HasCheckConstraint(
                 $"CK_{Table}_Timestamps",
                 "\"UpdatedAtUtc\" >= \"CreatedAtUtc\" AND (\"LastSignInAtUtc\" IS NULL OR \"LastSignInAtUtc\" >= \"CreatedAtUtc\")");
+            // KTL-45. Same shape as User.IsValidUserName, so a value that bypassed the domain is
+            // still refused.
+            table.HasCheckConstraint(
+                $"CK_{Table}_UserName",
+                "\"UserName\" IS NULL OR \"UserName\" ~ '^[a-z0-9._-]{3,64}$'");
+            // A password belongs to a local account; a hash with no name to sign in by is a defect.
+            table.HasCheckConstraint(
+                $"CK_{Table}_PasswordHash",
+                "\"PasswordHash\" IS NULL OR \"UserName\" IS NOT NULL");
         });
 
         builder.HasKey(user => user.Id);
         builder.Property(user => user.ExternalSubject).HasMaxLength(200);
         builder.Property(user => user.DisplayName).HasMaxLength(200).IsRequired();
         builder.Property(user => user.Email).HasMaxLength(320).IsRequired();
+        builder.Property(user => user.UserName).HasMaxLength(User.MaximumUserNameLength);
+        builder.Property(user => user.PasswordHash).HasMaxLength(User.MaximumPasswordHashLength);
         builder.Property(user => user.RoleName).HasMaxLength(RoleName.MaximumLength).IsRequired();
         builder.Property(user => user.IsActive).IsRequired();
         builder.Property(user => user.CreatedAtUtc).IsRequired();
@@ -56,6 +68,12 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         // The column is already stored lower-cased and a check constraint holds it that way, so
         // a plain unique index is the lower-cased uniqueness the design asks for.
         builder.HasIndex(user => user.Email).IsUnique().HasDatabaseName(UniqueEmailIndex);
+
+        // KTL-45. Only local accounts have a user name, so unique where present, like the subject.
+        builder.HasIndex(user => user.UserName)
+            .IsUnique()
+            .HasFilter("\"UserName\" IS NOT NULL")
+            .HasDatabaseName(UniqueUserNameIndex);
 
         // Supports the foreign key and the "is any user still holding this role?" invariant.
         builder.HasIndex(user => user.RoleName).HasDatabaseName(RoleNameIndex);

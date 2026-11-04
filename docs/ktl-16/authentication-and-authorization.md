@@ -8,6 +8,8 @@ The stable user key is the configured `Authentication:SubjectClaim`, `oid` by de
 
 Local and e2e environments acquire a signed token from `POST /api/dev/token`. That endpoint is anonymous only in `Development` or `Testing`; configuration validation refuses the development issuer and `DevelopmentActor` in `Production`.
 
+KTL-45 adds a third issuer: username and password sign-in at `POST /api/auth/token`. It is allowed in any environment, and its tokens go through the same pipeline and carry no permissions. The SPA chooses between the three with `AUTH_MODE`. See [docs/ktl-45/authentication-local-accounts.md](../ktl-45/authentication-local-accounts.md).
+
 ## Identity and effective permissions
 
 After token validation, `IdentityResolutionMiddleware` resolves the subject to `ADM_Users`. An unknown subject is provisioned once with the `readonly` role; the bootstrap administrator is linked by email on first sign-in. An inactive user is treated as unauthenticated. An inactive role authenticates the user but grants no permissions.

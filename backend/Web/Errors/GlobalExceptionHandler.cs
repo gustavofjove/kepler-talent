@@ -17,6 +17,7 @@ public sealed class GlobalExceptionHandler(
         var (status, title, code) = exception switch
         {
             RequestValidationException validation => (StatusCodes.Status400BadRequest, "Solicitud no válida", validation.Code),
+            InvalidCredentialsException invalid => (StatusCodes.Status401Unauthorized, "Credenciales no válidas", invalid.Code),
             ForbiddenException forbidden => (StatusCodes.Status403Forbidden, "Acceso denegado", forbidden.Code),
             NotFoundException notFound => (StatusCodes.Status404NotFound, "Recurso no encontrado", notFound.Code),
             ConflictException conflict => (StatusCodes.Status409Conflict, "Conflicto de concurrencia", conflict.Code),
@@ -33,7 +34,11 @@ public sealed class GlobalExceptionHandler(
         }
         if (exception is TooManyRequestsException)
         {
-            httpContext.Response.Headers.RetryAfter = "5";
+            // A caller that knows the real wait (the sign-in rate limiter) has already said so.
+            if (string.IsNullOrEmpty(httpContext.Response.Headers.RetryAfter))
+            {
+                httpContext.Response.Headers.RetryAfter = "5";
+            }
         }
         else if (exception is ServiceUnavailableException)
         {

@@ -96,6 +96,9 @@ public sealed class TokenCurrentActorTests
         public Task<User?> FindByEmailAsync(string email, CancellationToken cancellationToken) =>
             Task.FromResult(Stored?.Email == User.NormalizeEmail(email) ? Stored : null);
 
+        public Task<User?> FindByUserNameAsync(string userName, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
         public void Add(User user)
         {
             AddCalls++;

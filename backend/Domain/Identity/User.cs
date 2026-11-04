@@ -63,6 +63,18 @@ public sealed class User
     /// <summary>Foreign key to <c>ADM_Roles.Name</c>, which is why that name is immutable.</summary>
     public string RoleName { get; private set; } = string.Empty;
 
+    /// <summary>
+    /// The local account's sign-in name (KTL-45), or <see langword="null"/> for a user whose
+    /// identity belongs to the provider. Stored lower-cased; the unique index is on the stored value.
+    /// </summary>
+    public string? UserName { get; private set; }
+
+    /// <summary>
+    /// A self-describing one-way hash of the local account's password, never the password itself.
+    /// Written only by the migrator's seed, never mapped into a response, and redacted from logs.
+    /// </summary>
+    public string? PasswordHash { get; private set; }
+
     public DateTimeOffset? LastSignInAtUtc { get; private set; }
 
     public bool IsActive { get; private set; }
@@ -147,6 +159,47 @@ public sealed class User
     /// they read and retry on conflict rather than assuming it is stable.
     /// </summary>
     public void MarkSignedIn(DateTimeOffset signedInAtUtc) => LastSignInAtUtc = signedInAtUtc;
+
+    /// <summary>
+    /// Makes this user a local account, or replaces its password hash. The user name is fixed once
+    /// set: renaming a local account would orphan the <c>local:</c> subject its tokens carry.
+    /// </summary>
+    public void SetLocalCredentials(string userName, string passwordHash, DateTimeOffset updatedAtUtc)
+    {
+        var normalized = NormalizeUserName(userName);
+        if (!IsValidUserName(normalized))
+        {
+            throw new ArgumentException(
+                "A user name is 3-64 lowercase letters, digits, dots, underscores or hyphens.", nameof(userName));
+        }
+        if (UserName is not null && !string.Equals(UserName, normalized, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("A local account's user name cannot be changed.");
+        }
+        if (string.IsNullOrWhiteSpace(passwordHash) || passwordHash.Length > MaximumPasswordHashLength)
+        {
+            throw new ArgumentException("A password hash is non-blank and bounded.", nameof(passwordHash));
+        }
+
+        UserName = normalized;
+        PasswordHash = passwordHash;
+        UpdatedAtUtc = updatedAtUtc;
+    }
+
+    public const int MaximumUserNameLength = 64;
+
+    public const int MaximumPasswordHashLength = 256;
+
+    /// <summary>The subject a local account's tokens carry, which identity resolution keys on.</summary>
+    public static string LocalSubject(string userName) => $"local:{NormalizeUserName(userName)}";
+
+    public static string NormalizeUserName(string? userName) => (userName ?? string.Empty).Trim().ToLowerInvariant();
+
+    /// <summary>Mirrors <c>CK_ADM_Users_UserName</c>.</summary>
+    public static bool IsValidUserName(string normalizedUserName) =>
+        normalizedUserName.Length is >= 3 and <= MaximumUserNameLength
+        && normalizedUserName.All(character =>
+            character is (>= 'a' and <= 'z') or (>= '0' and <= '9') or '.' or '_' or '-');
 
     public static string NormalizeEmail(string? email) => (email ?? string.Empty).Trim().ToLowerInvariant();
 

@@ -5,7 +5,9 @@ using KeplerTalento.Application.Abstractions.Documents;
 using KeplerTalento.Application.Abstractions.Import;
 using KeplerTalento.Application.Abstractions.Operations;
 using KeplerTalento.Application.Abstractions.Encryption;
+using KeplerTalento.Application.Abstractions.Identity;
 using KeplerTalento.Infrastructure.CvExtraction;
+using KeplerTalento.Infrastructure.Identity;
 using KeplerTalento.Infrastructure.Encryption;
 using KeplerTalento.Infrastructure.Documents;
 using KeplerTalento.Infrastructure.Import;
@@ -34,6 +36,7 @@ public static class DependencyInjection
         services.AddScoped<ISearchPresetRepository, SearchPresetRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddScoped<IImportBatchRepository, ImportBatchRepository>();
         services.AddScoped<IAuditRepository, AuditRepository>();
         services.AddScoped<IPositionRepository, PositionRepository>();
