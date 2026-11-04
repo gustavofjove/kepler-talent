@@ -1,3 +1,4 @@
+using KeplerTalento.Application.Abstractions.Identity;
 using KeplerTalento.Domain.Catalogs;
 using KeplerTalento.Domain.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -57,6 +58,93 @@ public static class DatabaseInitializer
         }
     }
 
+    /// <summary>
+    /// Creates or re-hashes the local accounts named in deployment configuration (KTL-45 design
+    /// D6), and refuses to finish when one of them is unsafe.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The configured password is the source of truth: an account whose stored hash does not
+    /// verify against it is re-hashed, so rotating a password is "edit the secret, redeploy". The
+    /// role and active flag of an account that already exists are never touched, so an
+    /// administrator's edits survive every deploy.
+    /// </para>
+    /// <para>
+    /// Every entry is validated before anything is written, so a bad entry leaves the database as
+    /// it was rather than half-seeded.
+    /// </para>
+    /// </remarks>
+    /// <param name="forbiddenPasswords">
+    /// Values that must not be used here: the repository's development-only passwords in
+    /// Production, empty elsewhere.
+    /// </param>
+    public static async Task SeedLocalAccountsAsync(
+        ApplicationDbContext dbContext,
+        IPasswordHasher hasher,
+        IReadOnlyCollection<LocalAccountSeed> accounts,
+        IReadOnlySet<string> forbiddenPasswords,
+        CancellationToken cancellationToken)
+    {
+        if (accounts.Count == 0)
+        {
+            return;
+        }
+
+        var roleNames = await dbContext.Roles.Select(role => role.Name).ToListAsync(cancellationToken);
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var account in accounts)
+        {
+            var userName = User.NormalizeUserName(account.UserName);
+            if (!User.IsValidUserName(userName) || !seen.Add(userName))
+            {
+                throw new InvalidOperationException(
+                    "A local account in Authentication:LocalAccounts:Seed has a missing, invalid or repeated UserName.");
+            }
+            // Names the account, never the password: this message reaches the migrator's log.
+            if (string.IsNullOrEmpty(account.Password) || account.Password.Length < LocalAccountSeed.MinimumPasswordLength)
+            {
+                throw new InvalidOperationException(
+                    $"The password configured for local account '{userName}' must have at least "
+                    + $"{LocalAccountSeed.MinimumPasswordLength} characters.");
+            }
+            if (forbiddenPasswords.Contains(account.Password))
+            {
+                throw new InvalidOperationException(
+                    $"The password configured for local account '{userName}' is a development-only value.");
+            }
+            if (string.IsNullOrWhiteSpace(account.RoleName) || !roleNames.Contains(account.RoleName, StringComparer.Ordinal))
+            {
+                throw new InvalidOperationException(
+                    $"Local account '{userName}' names a role that does not exist.");
+            }
+        }
+
+        var seededAtUtc = DateTimeOffset.UtcNow;
+        foreach (var account in accounts)
+        {
+            var userName = User.NormalizeUserName(account.UserName);
+            var existing = await dbContext.Users.SingleOrDefaultAsync(user => user.UserName == userName, cancellationToken);
+            if (existing is null)
+            {
+                var user = new User(
+                    Guid.CreateVersion7(),
+                    externalSubject: User.LocalSubject(userName),
+                    displayName: string.IsNullOrWhiteSpace(account.DisplayName) ? userName : account.DisplayName,
+                    email: string.IsNullOrWhiteSpace(account.Email) ? $"{userName}@kepler-talento.local" : account.Email,
+                    roleName: account.RoleName!,
+                    createdAtUtc: seededAtUtc);
+                user.SetLocalCredentials(userName, hasher.Hash(account.Password!), seededAtUtc);
+                dbContext.Users.Add(user);
+            }
+            else if (existing.PasswordHash is null || !hasher.Verify(account.Password!, existing.PasswordHash))
+            {
+                existing.SetLocalCredentials(userName, hasher.Hash(account.Password!), seededAtUtc);
+            }
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     /// <summary>The role the bootstrap administrator is seeded into. Seeded by the migration.</summary>
     private const string BootstrapRoleName = "rrhh_admin";
 
@@ -104,9 +192,10 @@ public static class DatabaseInitializer
         if (normalizedEmail.Length == 0)
         {
             throw new InvalidOperationException(
-                "This installation has no active administrator and no Authentication:BootstrapAdministrator "
-                + "was configured. Set it and run --migrate again, or restore one against the database as "
-                + "docs/ktl-16/runbook.md describes.");
+                "This installation has no active administrator, no Authentication:BootstrapAdministrator "
+                + "was configured, and no seeded local account (Authentication:LocalAccounts:Seed) holds "
+                + "users.manage. Configure one and run --migrate again, or restore an administrator against "
+                + "the database as docs/ktl-16/runbook.md describes.");
         }
 
         var existing = await dbContext.Users

@@ -103,6 +103,14 @@ if (builder.Environment.IsProduction() && developmentIssuer?.Enabled == true)
 {
     throw new InvalidOperationException("Authentication:DevelopmentIssuer cannot be enabled in Production.");
 }
+// KTL-45. Thrown here rather than left to ValidateOnStart, because --migrate builds the app but
+// never starts it, and the seed must not run with options start-up would have refused.
+if (LocalAccountDefaults.Problem(authenticationOptions, builder.Environment.IsProduction()) is { } localAccountsProblem)
+{
+    throw new InvalidOperationException(localAccountsProblem);
+}
+var localAccounts = authenticationOptions.LocalAccounts;
+var localAccountsEnabled = localAccounts?.Enabled == true;
 
 var developmentActorOptions = builder.Configuration.GetSection(DevelopmentActorOptions.SectionName)
     .Get<DevelopmentActorOptions>() ?? new();
@@ -126,6 +134,10 @@ if (developmentIssuerEnabled)
 {
     builder.Services.AddSingleton<DevelopmentTokenIssuer>();
 }
+if (localAccountsEnabled)
+{
+    builder.Services.AddSingleton<LocalAccountTokenIssuer>();
+}
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -146,14 +158,32 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.FromSeconds(60),
         };
 
+        // The dev issuer and the local-account issuer (KTL-45) are trusted *in addition to* the
+        // tenant, and their tokens go through this same pipeline. Nothing here weakens
+        // validation; each adds one more issuer and one more key that a signature must match,
+        // and the binding below keeps each key to its own issuer.
+        var binding = new IssuerKeyBinding();
+        var issuers = new List<string>();
+        var audiences = new List<string>();
+        var keys = new List<SecurityKey>();
         if (developmentIssuerEnabled)
         {
-            // The dev issuer is trusted *in addition to* the tenant, and its tokens go through
-            // this same pipeline. Nothing here weakens validation; it adds one more issuer and
-            // one more key that a signature must match.
             var key = DevelopmentTokenIssuer.SigningKey(developmentIssuer!);
-            var issuers = new List<string> { developmentIssuer!.Issuer };
-            var audiences = new List<string> { developmentIssuer.Audience };
+            issuers.Add(developmentIssuer!.Issuer);
+            audiences.Add(developmentIssuer.Audience);
+            keys.Add(key);
+            binding.Bind(developmentIssuer.Issuer, key);
+        }
+        if (localAccountsEnabled)
+        {
+            var key = LocalAccountTokenIssuer.SigningKey(localAccounts!);
+            issuers.Add(localAccounts!.Issuer);
+            audiences.Add(localAccounts.Audience);
+            keys.Add(key);
+            binding.Bind(localAccounts.Issuer, key);
+        }
+        if (!binding.IsEmpty)
+        {
             if (!string.IsNullOrWhiteSpace(authenticationOptions.Authority))
             {
                 issuers.Add(authenticationOptions.Authority!);
@@ -164,12 +194,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             }
             options.TokenValidationParameters.ValidIssuers = issuers;
             options.TokenValidationParameters.ValidAudiences = audiences;
-            options.TokenValidationParameters.IssuerSigningKeys = [key];
+            options.TokenValidationParameters.IssuerSigningKeys = keys;
+            // A key is looked up by the token's kid and never by trying every key, and a bound
+            // key vouches only for the issuer it belongs to.
+            options.TokenValidationParameters.TryAllIssuerSigningKeys = false;
+            options.TokenValidationParameters.IssuerSigningKeyValidatorUsingConfiguration =
+                (key, token, _, _) => binding.Allows(key, token.Issuer);
             // Without an authority there is no discovery document to fetch, and asking for one
-            // would make start-up depend on a tenant the developer does not have.
-            options.RequireHttpsMetadata = false;
+            // would make start-up depend on a tenant the developer does not have. With one, only
+            // development relaxes the HTTPS requirement on fetching it.
+            if (developmentIssuerEnabled)
+            {
+                options.RequireHttpsMetadata = false;
+            }
             if (string.IsNullOrWhiteSpace(authenticationOptions.Authority))
             {
+                options.RequireHttpsMetadata = false;
                 options.Authority = null;
                 options.TokenValidationParameters.ValidateIssuerSigningKey = true;
             }
@@ -244,6 +284,37 @@ builder.Services.AddAuthorization(options =>
         && actor.HasPermission(Permissions.PositionsManage)
         && actor.HasPermission(Permissions.CandidatesRead)));
 });
+// KTL-45 design D5. Per client address, after UseForwardedHeaders has resolved it from the
+// trusted proxy. Attached to the password sign-in endpoint only. There is no lockout per user
+// name on purpose: with shared generic accounts it would let anyone lock HR out.
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy(PasswordSignInEndpoints.RateLimitPolicy, httpContext =>
+        System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+            {
+                PermitLimit = localAccounts?.SignInAttemptsPerMinute ?? 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+    // The same ProblemDetails shape every other refusal has, written by the same handler rather
+    // than by hand, with the wait the window actually imposes.
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.Headers.RetryAfter = "60";
+        var handler = context.HttpContext.RequestServices
+            .GetServices<Microsoft.AspNetCore.Diagnostics.IExceptionHandler>()
+            .OfType<GlobalExceptionHandler>()
+            .Single();
+        await handler.TryHandleAsync(
+            context.HttpContext,
+            new KeplerTalento.Application.Common.Errors.TooManyRequestsException(
+                "auth.too_many_attempts",
+                "Demasiados intentos. Espere un minuto y vuelva a intentarlo."),
+            cancellationToken);
+    };
+});
 builder.Services.AddSingleton<CvDraftGate>();
 builder.Services.AddScoped<CorrelationContext>();
 builder.Services.AddScoped<ICorrelationContext>(provider => provider.GetRequiredService<CorrelationContext>());
@@ -307,14 +378,39 @@ if (args.Contains("--migrate", StringComparer.Ordinal))
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await DatabaseInitializer.MigrateAsync(dbContext, app.Lifetime.ApplicationStopping);
     await DatabaseInitializer.SeedCatalogsAsync(dbContext, app.Lifetime.ApplicationStopping);
-    // Runs last and throws when the installation would be left with nobody able to administer
-    // it. Deploying on into a locked-out installation is the failure this is here to prevent,
-    // so it fails the migrator rather than logging a warning nobody reads.
-    await DatabaseInitializer.SeedBootstrapAdministratorAsync(
+    // Throws when the installation would be left with nobody able to administer it. Deploying on
+    // into a locked-out installation is the failure this is here to prevent, so it fails the
+    // migrator rather than logging a warning nobody reads.
+    var seedBootstrapAdministrator = () => DatabaseInitializer.SeedBootstrapAdministratorAsync(
         dbContext,
         authenticationOptions.BootstrapAdministrator?.Email,
         authenticationOptions.BootstrapAdministrator?.DisplayName,
         app.Lifetime.ApplicationStopping);
+    // KTL-45. With a bootstrap address configured it is seeded first, exactly as before, so a
+    // fresh database still gets that administrator even though a seeded local admin follows.
+    // Without one, the local accounts go first and the bootstrap step is only the lockout check.
+    var bootstrapConfigured = !string.IsNullOrWhiteSpace(authenticationOptions.BootstrapAdministrator?.Email);
+    if (bootstrapConfigured)
+    {
+        await seedBootstrapAdministrator();
+    }
+    // Keyed on the seed list, not on Enabled: the migrator holds the passwords and the API holds
+    // the signing key, and neither container needs the other's secret.
+    if (localAccounts is { Seed.Length: > 0 })
+    {
+        await DatabaseInitializer.SeedLocalAccountsAsync(
+            dbContext,
+            scope.ServiceProvider.GetRequiredService<IPasswordHasher>(),
+            localAccounts.Seed
+                .Select(seed => new LocalAccountSeed(seed.UserName, seed.DisplayName, seed.Email, seed.RoleName, seed.Password))
+                .ToList(),
+            app.Environment.IsProduction() ? LocalAccountDefaults.DevelopmentOnlyValues : new HashSet<string>(),
+            app.Lifetime.ApplicationStopping);
+    }
+    if (!bootstrapConfigured)
+    {
+        await seedBootstrapAdministrator();
+    }
     return;
 }
 // KTL-33: the serving path refuses to start without valid keys, while any encrypted column still
@@ -347,6 +443,9 @@ app.UseSerilogRequestLogging(options =>
 {
     options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
 });
+// After the correlation middleware and the security headers, so a 429 carries both, and before
+// the endpoint, so a refused attempt never reaches the password check (KTL-45 design D5).
+app.UseRateLimiter();
 // After the correlation middleware, so a refused request still carries a correlation id, and
 // before endpoint dispatch (design D1).
 app.UseAuthentication();
@@ -425,6 +524,12 @@ if (developmentIssuerEnabled)
     // Anonymous by necessity - it is how a caller acquires a token - and therefore mapped only
     // outside Production, where start-up would already have failed.
     app.MapDevelopmentTokenEndpoints();
+}
+if (localAccountsEnabled)
+{
+    // Anonymous too, but a credential check rather than a token for the asking, which is why it
+    // may exist in Production (KTL-45). Unmapped - a 404 - when local accounts are off.
+    app.MapPasswordSignInEndpoints();
 }
 if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
 {

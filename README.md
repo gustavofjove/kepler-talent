@@ -22,16 +22,52 @@ intenta habilitarlos en Production.
 
 ## Identidad y acceso KTL-16
 
-Con `docker compose up --build`, ejecuta `npm start` desde `frontend/`, abre `http://localhost:4300/login` y
-pulsa **Iniciar sesión**. En `APP_ENV=local`, la SPA obtiene un token firmado de
-`POST /api/dev/token` para `admin@kepler-talento.local`; el backend lo valida por el mismo
-pipeline JWT que las peticiones normales. El token no se guarda en `localStorage`.
+Con `docker compose up --build`, ejecuta `npm start` desde `frontend/` y abre
+`http://localhost:4300/login`. Desde KTL-45 la SPA pide usuario y contraseña (ver la sección
+siguiente). El emisor de desarrollo sigue activo en la API local: la suite e2e y
+`npm run seed:demo` obtienen con él un token firmado de `POST /api/dev/token` para
+`admin@kepler-talento.local`, que el backend valida por el mismo pipeline JWT que las peticiones
+normales.
 
 En producción se configuran `ENTRA_CLIENT_ID`, `ENTRA_AUTHORITY` y `ENTRA_API_SCOPE`. Los
 permisos efectivos se leen de PostgreSQL en cada petición y usan una sola nomenclatura
 `<resource>.<action>`, por ejemplo `candidates.read`, `users.manage` y `roles.manage`.
 Consulta el [contrato de autenticación y autorización](docs/ktl-16/authentication-and-authorization.md)
 y el [runbook de despliegue y recuperación](docs/ktl-16/runbook.md).
+
+## Usuario y contraseña KTL-45
+
+La forma de iniciar sesión la decide la variable de ejecución `AUTH_MODE` de la SPA:
+
+- `development`: un botón que entra sin contraseña como administrador local. Solo lo usa el
+  navegador de la suite e2e.
+- `password`: formulario de usuario y contraseña contra `POST /api/auth/token`.
+- `entra`: Microsoft Entra ID.
+
+Sin `AUTH_MODE`, se mantiene el comportamiento anterior: `APP_ENV=local` o `test` usa
+`development`, y cualquier otro valor usa `entra`.
+
+En local, tanto `http://localhost:4200` (Compose) como `http://localhost:4300` (Vite) usan
+`password`. El migrador crea dos cuentas
+genéricas, y sus contraseñas son **solo de desarrollo**: están publicadas en
+`docker-compose.yml` y Production las rechaza.
+
+| Usuario      | Rol          | Contraseña (solo desarrollo) |
+| ------------ | ------------ | ---------------------------- |
+| `rrhh_admin` | `rrhh_admin` | `KeplerLocal-Admin-2026`     |
+| `rrhh_user`  | `rrhh_user`  | `KeplerLocal-User-2026`      |
+
+La suite e2e sirve a su navegador una configuración propia con `development`, para poder actuar
+con varios roles sin contraseña (`frontend/tests/e2e/support/auth.ts`).
+
+- **Contraseñas.** Se guardan solo como hash PBKDF2-SHA256. Cambiar la contraseña configurada y
+  volver a desplegar la rota.
+- **Sesión.** El token vive en `sessionStorage` de la pestaña y se borra al cerrar sesión o ante
+  un `401`.
+- **Más detalles.** Consulta el
+  [contrato de cuentas locales](docs/ktl-45/authentication-local-accounts.md) y las
+  [notas de versión](docs/ktl-45/release-notes.md), que explican el orden de despliegue en el
+  servidor LAN.
 
 ## Catálogos KTL-6
 

@@ -73,6 +73,11 @@ public sealed class PersonalDataRedactionEnricher : ILogEventEnricher
         "preferred_username",
         "given_name",
         "family_name",
+        // KTL-45. A local account's sign-in name can name a person, and a password or its hash
+        // has no business in a log under any spelling.
+        "userName",
+        "password",
+        "passwordHash",
         // KTL-17. An import file is a bulk collection of candidate data, so its column names are
         // masked as readily as the candidate properties they become, and the uploaded file's own
         // name — caller text that routinely names a person — along with every spelling of it.

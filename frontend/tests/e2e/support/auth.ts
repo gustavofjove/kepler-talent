@@ -48,7 +48,26 @@ export async function signInAs(page: Page, role: AuthRole): Promise<void> {
   };
 }
 
+const developmentModePages = new WeakSet<Page>();
+
+/**
+ * KTL-45: the dev server signs people in with a password, like every other environment. The
+ * suite still needs to be any of several roles without a password each, so only the test browser
+ * is switched to the development issuer, by serving it its own runtime configuration.
+ */
+async function useDevelopmentSignIn(page: Page): Promise<void> {
+  if (developmentModePages.has(page)) return;
+  developmentModePages.add(page);
+  await page.route('**/env.js', (route) =>
+    route.fulfill({
+      contentType: 'application/javascript',
+      body: "window.__APP_CONFIG__ = { API_BASE_URL: '/api', APP_ENV: 'local', AUTH_MODE: 'development', APP_VERSION: 'e2e' };",
+    }),
+  );
+}
+
 async function authenticate(page: Page, role: AuthRole, goto: Page['goto']): Promise<void> {
+  await useDevelopmentSignIn(page);
   await page.route('**/api/dev/token', async (route) => {
     const request = route.request();
     const identity =

@@ -49,6 +49,19 @@ services:
       # finish without an active administrator, so this is what keeps a fresh stack usable.
       Authentication__BootstrapAdministrator__Email: admin@kepler-talento.local
       Authentication__BootstrapAdministrator__DisplayName: Administrador local
+      # KTL-45: the generic local accounts, created or re-hashed on every migration. The
+      # passwords below are DEVELOPMENT-ONLY values, published in this repository; Production
+      # refuses them. Shared environments take theirs from secrets (deploy/lan).
+      Authentication__LocalAccounts__Seed__0__UserName: rrhh_admin
+      Authentication__LocalAccounts__Seed__0__DisplayName: RRHH Administración
+      Authentication__LocalAccounts__Seed__0__Email: rrhh.admin@kepler-talento.local
+      Authentication__LocalAccounts__Seed__0__RoleName: rrhh_admin
+      Authentication__LocalAccounts__Seed__0__Password: KeplerLocal-Admin-2026
+      Authentication__LocalAccounts__Seed__1__UserName: rrhh_user
+      Authentication__LocalAccounts__Seed__1__DisplayName: RRHH Usuario
+      Authentication__LocalAccounts__Seed__1__Email: rrhh.user@kepler-talento.local
+      Authentication__LocalAccounts__Seed__1__RoleName: rrhh_user
+      Authentication__LocalAccounts__Seed__1__Password: KeplerLocal-User-2026
       DocumentStorage__Root: /var/lib/kepler-talento/documents
       ClamAv__Host: clamav
     volumes:
@@ -75,6 +88,10 @@ services:
       Authentication__DevelopmentIssuer__SigningKey: development-only-signing-key-change-me-32b
       Authentication__DevelopmentIssuer__Issuer: https://kepler-talento.local/dev
       Authentication__DevelopmentIssuer__Audience: kepler-talento-api
+      # KTL-45: username/password sign-in at POST /api/auth/token. A DEVELOPMENT-ONLY key,
+      # distinct from the development issuer's; Production refuses it.
+      Authentication__LocalAccounts__Enabled: 'true'
+      Authentication__LocalAccounts__SigningKey: development-only-local-accounts-key-change-me-32b
       Authentication__BootstrapAdministrator__Email: admin@kepler-talento.local
       Authentication__BootstrapAdministrator__DisplayName: Administrador local
       DocumentStorage__Root: /var/lib/kepler-talento/documents
@@ -110,6 +127,9 @@ services:
       SUPABASE_URL: ${SUPABASE_URL:-}
       SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
       APP_ENV: development
+      # KTL-45: the bundle on :4200 signs in with a user name and password (rrhh_admin /
+      # rrhh_user), as does the Vite dev server on :4300 (frontend/public/env.js).
+      AUTH_MODE: password
       APP_VERSION: ${APP_VERSION:-0.1.0}
     ports:
       - '${FRONTEND_PORT:-4200}:8080'

@@ -10,6 +10,13 @@ public sealed class NotFoundException(string code, string message) : Application
 public sealed class ForbiddenException(string code = "authorization.denied")
     : ApplicationExceptionBase(code, "No tiene permisos para realizar esta operación.");
 
+/// <summary>
+/// A password sign-in was refused (401, KTL-45). One type and one message for every cause, so the
+/// response never says whether the user name exists.
+/// </summary>
+public sealed class InvalidCredentialsException()
+    : ApplicationExceptionBase("auth.invalid_credentials", "Usuario o contraseña incorrectos.");
+
 public sealed class ConflictException(string code, string message) : ApplicationExceptionBase(code, message);
 
 /// <summary>The request was well formed but its content cannot be processed (422).</summary>

@@ -189,6 +189,8 @@ public sealed class AdminInvariantTests
             throw new NotSupportedException();
         public Task<User?> FindByEmailAsync(string email, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
+        public Task<User?> FindByUserNameAsync(string userName, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
         public void Add(User user) => throw new NotSupportedException();
         public void ExpectVersion(User user, uint version) => throw new NotSupportedException();
         public Task<UserSaveOutcome> SaveAsync(CancellationToken cancellationToken) =>

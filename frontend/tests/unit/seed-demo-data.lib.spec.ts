@@ -213,9 +213,9 @@ describe('demo dataset (KTL-40)', () => {
       }
       const { experience } = lib.backgroundBodies(background, today);
       for (const row of experience) {
-        expect(Number.isInteger(row.yearsExperience) && Number(row.yearsExperience) >= 0).toBe(
-          true,
-        );
+        expect(
+          Number.isInteger(row['yearsExperience']) && Number(row['yearsExperience']) >= 0,
+        ).toBe(true);
       }
     }
   });
