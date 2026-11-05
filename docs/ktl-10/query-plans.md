@@ -10,132 +10,206 @@ they issue no SQL of their own worth a plan here. Their evidence is
 
 ## Deep page 30 sorted by UpdatedAt Ascending
 
-Execution time: 4.2 ms
+Execution time: 3.9 ms
 
 ```
-Limit  (cost=72789.76..75281.26 rows=100 width=324) (actual time=3.939..3.967 rows=100 loops=1)
+Limit  (cost=72789.76..75281.26 rows=100 width=324) (actual time=3.704..3.767 rows=100 loops=1)
   Buffers: shared hit=585
-  ->  Result  (cost=536.26..75281.26 rows=3000 width=324) (actual time=3.221..3.893 rows=3000 loops=1)
+  ->  Result  (cost=536.26..75281.26 rows=3000 width=324) (actual time=2.969..3.689 rows=3000 loops=1)
         Buffers: shared hit=585
-        ->  Sort  (cost=536.26..543.76 rows=3000 width=321) (actual time=2.011..2.178 rows=3000 loops=1)
+        ->  Sort  (cost=536.26..543.76 rows=3000 width=321) (actual time=2.085..2.287 rows=3000 loops=1)
               Sort Key: c."UpdatedAtUtc", c."Id"
               Sort Method: quicksort  Memory: 1620kB
               Buffers: shared hit=333
-              ->  Seq Scan on "CND_Candidates" c  (cost=0.00..363.00 rows=3000 width=321) (actual time=0.011..0.780 rows=3000 loops=1)
+              ->  Seq Scan on "CND_Candidates" c  (cost=0.00..363.00 rows=3000 width=321) (actual time=0.007..0.832 rows=3000 loops=1)
                     Buffers: shared hit=333
         SubPlan 2
-          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.010..0.265 rows=2000 loops=1)
+          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.010..0.283 rows=2000 loops=1)
                 Filter: "IsPrimary"
                 Buffers: shared hit=84
         SubPlan 4
-          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..124.00 rows=1 width=16) (actual time=0.332..0.332 rows=0 loops=1)
+          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..124.00 rows=1 width=16) (actual time=0.173..0.174 rows=0 loops=1)
                 Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("ContentType")::text = 'application/pdf'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
 '::text) <> ''::text)))
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
         SubPlan 6
-          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.340..0.340 rows=0 loops=1)
+          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.159..0.159 rows=0 loops=1)
                 Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
 '::text) <> ''::text)))
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
 Planning:
   Buffers: shared hit=7
-Planning Time: 0.276 ms
-Execution Time: 4.189 ms
+Planning Time: 0.361 ms
+Execution Time: 3.941 ms
 ```
 
 ## Deep page 30 sorted by UpdatedAt Descending
 
-Execution time: 3.9 ms
+Execution time: 8.5 ms
 
 ```
-Limit  (cost=72789.76..75281.26 rows=100 width=324) (actual time=3.698..3.729 rows=100 loops=1)
+Limit  (cost=72789.76..75281.26 rows=100 width=324) (actual time=8.221..8.252 rows=100 loops=1)
   Buffers: shared hit=585
-  ->  Result  (cost=536.26..75281.26 rows=3000 width=324) (actual time=2.959..3.656 rows=3000 loops=1)
+  ->  Result  (cost=536.26..75281.26 rows=3000 width=324) (actual time=7.388..8.126 rows=3000 loops=1)
         Buffers: shared hit=585
-        ->  Sort  (cost=536.26..543.76 rows=3000 width=321) (actual time=1.975..2.153 rows=3000 loops=1)
+        ->  Sort  (cost=536.26..543.76 rows=3000 width=321) (actual time=5.889..6.088 rows=3000 loops=1)
               Sort Key: c."UpdatedAtUtc" DESC, c."Id"
               Sort Method: quicksort  Memory: 1620kB
               Buffers: shared hit=333
-              ->  Seq Scan on "CND_Candidates" c  (cost=0.00..363.00 rows=3000 width=321) (actual time=0.009..0.748 rows=3000 loops=1)
+              ->  Seq Scan on "CND_Candidates" c  (cost=0.00..363.00 rows=3000 width=321) (actual time=0.017..2.116 rows=3000 loops=1)
                     Buffers: shared hit=333
         SubPlan 2
-          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.007..0.346 rows=2000 loops=1)
+          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.019..0.505 rows=2000 loops=1)
                 Filter: "IsPrimary"
                 Buffers: shared hit=84
         SubPlan 4
-          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..124.00 rows=1 width=16) (actual time=0.207..0.207 rows=0 loops=1)
+          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..124.00 rows=1 width=16) (actual time=0.224..0.224 rows=0 loops=1)
                 Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("ContentType")::text = 'application/pdf'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
 '::text) <> ''::text)))
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
         SubPlan 6
-          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.170..0.170 rows=0 loops=1)
+          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.224..0.224 rows=0 loops=1)
                 Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
 '::text) <> ''::text)))
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
 Planning:
   Buffers: shared hit=7
-Planning Time: 0.238 ms
-Execution Time: 3.900 ms
+Planning Time: 0.397 ms
+Execution Time: 8.511 ms
 ```
 
 ## Deep page 30 sorted by AvailabilityCheckedOn Ascending
 
-Execution time: 7.7 ms
+Execution time: 8.6 ms
 
 ```
-Limit  (cost=72789.76..75281.26 rows=100 width=325) (actual time=7.398..7.441 rows=100 loops=1)
+Limit  (cost=72789.76..75281.26 rows=100 width=325) (actual time=8.122..8.204 rows=100 loops=1)
   Buffers: shared hit=585
-  ->  Result  (cost=536.26..75281.26 rows=3000 width=325) (actual time=6.318..7.314 rows=3000 loops=1)
+  ->  Result  (cost=536.26..75281.26 rows=3000 width=325) (actual time=7.116..8.066 rows=3000 loops=1)
         Buffers: shared hit=585
-        ->  Sort  (cost=536.26..543.76 rows=3000 width=322) (actual time=5.351..5.561 rows=3000 loops=1)
+        ->  Sort  (cost=536.26..543.76 rows=3000 width=322) (actual time=6.250..6.456 rows=3000 loops=1)
               Sort Key: ((c."AvailabilityCheckedOn" IS NULL)), c."AvailabilityCheckedOn", c."Id"
               Sort Method: quicksort  Memory: 1620kB
               Buffers: shared hit=333
-              ->  Seq Scan on "CND_Candidates" c  (cost=0.00..363.00 rows=3000 width=322) (actual time=0.015..1.422 rows=3000 loops=1)
+              ->  Seq Scan on "CND_Candidates" c  (cost=0.00..363.00 rows=3000 width=322) (actual time=0.027..1.557 rows=3000 loops=1)
                     Buffers: shared hit=333
         SubPlan 2
-          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.012..0.305 rows=2000 loops=1)
+          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.013..0.268 rows=2000 loops=1)
                 Filter: "IsPrimary"
                 Buffers: shared hit=84
         SubPlan 4
-          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..124.00 rows=1 width=16) (actual time=0.234..0.234 rows=0 loops=1)
+          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..124.00 rows=1 width=16) (actual time=0.169..0.169 rows=0 loops=1)
                 Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("ContentType")::text = 'application/pdf'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
 '::text) <> ''::text)))
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
         SubPlan 6
-          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.162..0.162 rows=0 loops=1)
+          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.148..0.149 rows=0 loops=1)
                 Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
 '::text) <> ''::text)))
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
 Planning:
   Buffers: shared hit=7
-Planning Time: 0.545 ms
-Execution Time: 7.700 ms
+Planning Time: 0.511 ms
+Execution Time: 8.612 ms
 ```
 
 ## Deep page 30 sorted by AvailabilityCheckedOn Descending
 
-Execution time: 5.4 ms
+Execution time: 11.9 ms
 
 ```
-Limit  (cost=72789.76..75281.26 rows=100 width=325) (actual time=5.230..5.253 rows=100 loops=1)
+Limit  (cost=72789.76..75281.26 rows=100 width=325) (actual time=11.597..11.625 rows=100 loops=1)
   Buffers: shared hit=585
-  ->  Result  (cost=536.26..75281.26 rows=3000 width=325) (actual time=4.559..5.179 rows=3000 loops=1)
+  ->  Result  (cost=536.26..75281.26 rows=3000 width=325) (actual time=10.777..11.538 rows=3000 loops=1)
         Buffers: shared hit=585
-        ->  Sort  (cost=536.26..543.76 rows=3000 width=322) (actual time=3.640..3.781 rows=3000 loops=1)
+        ->  Sort  (cost=536.26..543.76 rows=3000 width=322) (actual time=8.870..9.048 rows=3000 loops=1)
               Sort Key: ((c."AvailabilityCheckedOn" IS NULL)), c."AvailabilityCheckedOn" DESC, c."Id"
               Sort Method: quicksort  Memory: 1620kB
               Buffers: shared hit=333
-              ->  Seq Scan on "CND_Candidates" c  (cost=0.00..363.00 rows=3000 width=322) (actual time=0.007..0.953 rows=3000 loops=1)
+              ->  Seq Scan on "CND_Candidates" c  (cost=0.00..363.00 rows=3000 width=322) (actual time=0.018..1.743 rows=3000 loops=1)
                     Buffers: shared hit=333
         SubPlan 2
-          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.010..0.308 rows=2000 loops=1)
+          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.027..0.593 rows=2000 loops=1)
+                Filter: "IsPrimary"
+                Buffers: shared hit=84
+        SubPlan 4
+          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..124.00 rows=1 width=16) (actual time=0.300..0.300 rows=0 loops=1)
+                Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("ContentType")::text = 'application/pdf'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
+'::text) <> ''::text)))
+                Rows Removed by Filter: 2000
+                Buffers: shared hit=84
+        SubPlan 6
+          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.256..0.257 rows=0 loops=1)
+                Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
+'::text) <> ''::text)))
+                Rows Removed by Filter: 2000
+                Buffers: shared hit=84
+Planning:
+  Buffers: shared hit=7
+Planning Time: 0.604 ms
+Execution Time: 11.870 ms
+```
+
+## Deep page 30 sorted by CreatedAt Ascending
+
+Execution time: 5.2 ms
+
+```
+Limit  (cost=72789.76..75281.26 rows=100 width=332) (actual time=4.608..4.658 rows=100 loops=1)
+  Buffers: shared hit=585
+  ->  Result  (cost=536.26..75281.26 rows=3000 width=332) (actual time=3.500..4.544 rows=3000 loops=1)
+        Buffers: shared hit=585
+        ->  Sort  (cost=536.26..543.76 rows=3000 width=329) (actual time=2.650..2.801 rows=3000 loops=1)
+              Sort Key: c."CreatedAtUtc", c."Id"
+              Sort Method: quicksort  Memory: 1620kB
+              Buffers: shared hit=333
+              ->  Seq Scan on "CND_Candidates" c  (cost=0.00..363.00 rows=3000 width=329) (actual time=0.014..0.949 rows=3000 loops=1)
+                    Buffers: shared hit=333
+        SubPlan 2
+          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.008..0.288 rows=2000 loops=1)
+                Filter: "IsPrimary"
+                Buffers: shared hit=84
+        SubPlan 4
+          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..124.00 rows=1 width=16) (actual time=0.167..0.167 rows=0 loops=1)
+                Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("ContentType")::text = 'application/pdf'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
+'::text) <> ''::text)))
+                Rows Removed by Filter: 2000
+                Buffers: shared hit=84
+        SubPlan 6
+          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.143..0.143 rows=0 loops=1)
+                Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
+'::text) <> ''::text)))
+                Rows Removed by Filter: 2000
+                Buffers: shared hit=84
+Planning:
+  Buffers: shared hit=7
+Planning Time: 0.453 ms
+Execution Time: 5.162 ms
+```
+
+## Deep page 30 sorted by CreatedAt Descending
+
+Execution time: 3.8 ms
+
+```
+Limit  (cost=72789.76..75281.26 rows=100 width=332) (actual time=3.629..3.653 rows=100 loops=1)
+  Buffers: shared hit=585
+  ->  Result  (cost=536.26..75281.26 rows=3000 width=332) (actual time=3.007..3.579 rows=3000 loops=1)
+        Buffers: shared hit=585
+        ->  Sort  (cost=536.26..543.76 rows=3000 width=329) (actual time=2.154..2.244 rows=3000 loops=1)
+              Sort Key: c."CreatedAtUtc" DESC, c."Id"
+              Sort Method: quicksort  Memory: 1620kB
+              Buffers: shared hit=333
+              ->  Seq Scan on "CND_Candidates" c  (cost=0.00..363.00 rows=3000 width=329) (actual time=0.007..0.830 rows=3000 loops=1)
+                    Buffers: shared hit=333
+        SubPlan 2
+          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.009..0.257 rows=2000 loops=1)
                 Filter: "IsPrimary"
                 Buffers: shared hit=84
         SubPlan 4
@@ -145,89 +219,15 @@ Limit  (cost=72789.76..75281.26 rows=100 width=325) (actual time=5.230..5.253 ro
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
         SubPlan 6
-          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.166..0.166 rows=0 loops=1)
+          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.156..0.157 rows=0 loops=1)
                 Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
 '::text) <> ''::text)))
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
 Planning:
   Buffers: shared hit=7
-Planning Time: 0.221 ms
-Execution Time: 5.418 ms
-```
-
-## Deep page 30 sorted by CreatedAt Ascending
-
-Execution time: 3.9 ms
-
-```
-Limit  (cost=72789.76..75281.26 rows=100 width=332) (actual time=3.678..3.703 rows=100 loops=1)
-  Buffers: shared hit=585
-  ->  Result  (cost=536.26..75281.26 rows=3000 width=332) (actual time=3.051..3.628 rows=3000 loops=1)
-        Buffers: shared hit=585
-        ->  Sort  (cost=536.26..543.76 rows=3000 width=329) (actual time=2.120..2.214 rows=3000 loops=1)
-              Sort Key: c."CreatedAtUtc", c."Id"
-              Sort Method: quicksort  Memory: 1620kB
-              Buffers: shared hit=333
-              ->  Seq Scan on "CND_Candidates" c  (cost=0.00..363.00 rows=3000 width=329) (actual time=0.008..0.852 rows=3000 loops=1)
-                    Buffers: shared hit=333
-        SubPlan 2
-          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.007..0.300 rows=2000 loops=1)
-                Filter: "IsPrimary"
-                Buffers: shared hit=84
-        SubPlan 4
-          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..124.00 rows=1 width=16) (actual time=0.197..0.197 rows=0 loops=1)
-                Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("ContentType")::text = 'application/pdf'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
-'::text) <> ''::text)))
-                Rows Removed by Filter: 2000
-                Buffers: shared hit=84
-        SubPlan 6
-          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.166..0.166 rows=0 loops=1)
-                Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
-'::text) <> ''::text)))
-                Rows Removed by Filter: 2000
-                Buffers: shared hit=84
-Planning:
-  Buffers: shared hit=7
-Planning Time: 0.222 ms
-Execution Time: 3.854 ms
-```
-
-## Deep page 30 sorted by CreatedAt Descending
-
-Execution time: 3.7 ms
-
-```
-Limit  (cost=72789.76..75281.26 rows=100 width=332) (actual time=3.492..3.516 rows=100 loops=1)
-  Buffers: shared hit=585
-  ->  Result  (cost=536.26..75281.26 rows=3000 width=332) (actual time=2.849..3.440 rows=3000 loops=1)
-        Buffers: shared hit=585
-        ->  Sort  (cost=536.26..543.76 rows=3000 width=329) (actual time=1.910..1.997 rows=3000 loops=1)
-              Sort Key: c."CreatedAtUtc" DESC, c."Id"
-              Sort Method: quicksort  Memory: 1620kB
-              Buffers: shared hit=333
-              ->  Seq Scan on "CND_Candidates" c  (cost=0.00..363.00 rows=3000 width=329) (actual time=0.008..0.730 rows=3000 loops=1)
-                    Buffers: shared hit=333
-        SubPlan 2
-          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.006..0.257 rows=2000 loops=1)
-                Filter: "IsPrimary"
-                Buffers: shared hit=84
-        SubPlan 4
-          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..124.00 rows=1 width=16) (actual time=0.190..0.190 rows=0 loops=1)
-                Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("ContentType")::text = 'application/pdf'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
-'::text) <> ''::text)))
-                Rows Removed by Filter: 2000
-                Buffers: shared hit=84
-        SubPlan 6
-          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.195..0.195 rows=0 loops=1)
-                Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
-'::text) <> ''::text)))
-                Rows Removed by Filter: 2000
-                Buffers: shared hit=84
-Planning:
-  Buffers: shared hit=7
-Planning Time: 0.216 ms
-Execution Time: 3.668 ms
+Planning Time: 0.234 ms
+Execution Time: 3.824 ms
 ```
 
 ## Newest active candidates first, home page panel
@@ -235,223 +235,223 @@ Execution Time: 3.668 ms
 Execution time: 0.9 ms
 
 ```
-Limit  (cost=0.28..126.27 rows=5 width=332) (actual time=0.828..0.832 rows=5 loops=1)
+Limit  (cost=0.28..126.27 rows=5 width=332) (actual time=0.846..0.850 rows=5 loops=1)
   Buffers: shared hit=255
-  ->  Index Scan using "IX_CND_Candidates_IsActive_CreatedAtUtc" on "CND_Candidates" c  (cost=0.28..75592.53 rows=3000 width=332) (actual time=0.827..0.831 rows=5 loops=1)
+  ->  Index Scan using "IX_CND_Candidates_IsActive_CreatedAtUtc" on "CND_Candidates" c  (cost=0.28..75592.53 rows=3000 width=332) (actual time=0.845..0.849 rows=5 loops=1)
         Buffers: shared hit=255
         SubPlan 2
-          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.004..0.248 rows=2000 loops=1)
+          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.006..0.253 rows=2000 loops=1)
                 Filter: "IsPrimary"
                 Buffers: shared hit=84
         SubPlan 4
-          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..124.00 rows=1 width=16) (actual time=0.173..0.173 rows=0 loops=1)
+          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..124.00 rows=1 width=16) (actual time=0.165..0.165 rows=0 loops=1)
                 Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("ContentType")::text = 'application/pdf'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
 '::text) <> ''::text)))
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
         SubPlan 6
-          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.162..0.162 rows=0 loops=1)
+          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.150..0.150 rows=0 loops=1)
                 Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
 '::text) <> ''::text)))
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
 Planning:
   Buffers: shared hit=7
-Planning Time: 0.204 ms
-Execution Time: 0.898 ms
+Planning Time: 0.241 ms
+Execution Time: 0.926 ms
 ```
 
 ## Unfiltered first page
 
-Execution time: 1.1 ms
+Execution time: 2.1 ms
 
 ```
-Limit  (cost=0.58..631.85 rows=25 width=324) (actual time=0.967..0.975 rows=25 loops=1)
-  Buffers: shared hit=268
-  ->  Result  (cost=0.58..75753.03 rows=3000 width=324) (actual time=0.966..0.973 rows=25 loops=1)
-        Buffers: shared hit=268
-        ->  Incremental Sort  (cost=0.58..1015.53 rows=3000 width=321) (actual time=0.047..0.049 rows=25 loops=1)
+Limit  (cost=0.58..631.85 rows=25 width=324) (actual time=1.965..1.975 rows=25 loops=1)
+  Buffers: shared hit=271
+  ->  Result  (cost=0.58..75753.03 rows=3000 width=324) (actual time=1.963..1.971 rows=25 loops=1)
+        Buffers: shared hit=271
+        ->  Incremental Sort  (cost=0.58..1015.53 rows=3000 width=321) (actual time=0.124..0.126 rows=25 loops=1)
               Sort Key: c."UpdatedAtUtc" DESC, c."Id"
               Presorted Key: c."UpdatedAtUtc"
               Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 37kB  Peak Memory: 37kB
-              Buffers: shared hit=16
-              ->  Index Scan Backward using "IX_CND_Candidates_IsActive_UpdatedAtUtc" on "CND_Candidates" c  (cost=0.28..880.53 rows=3000 width=321) (actual time=0.017..0.028 rows=26 loops=1)
+              Buffers: shared hit=19
+              ->  Index Scan Backward using "IX_CND_Candidates_IsActive_UpdatedAtUtc" on "CND_Candidates" c  (cost=0.28..880.53 rows=3000 width=321) (actual time=0.036..0.065 rows=26 loops=1)
                     Index Cond: ("IsActive" = true)
-                    Buffers: shared hit=16
+                    Buffers: shared hit=19
         SubPlan 2
-          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.006..0.301 rows=2000 loops=1)
+          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.014..0.696 rows=2000 loops=1)
                 Filter: "IsPrimary"
                 Buffers: shared hit=84
         SubPlan 4
-          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..124.00 rows=1 width=16) (actual time=0.196..0.196 rows=0 loops=1)
+          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..124.00 rows=1 width=16) (actual time=0.241..0.241 rows=0 loops=1)
                 Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("ContentType")::text = 'application/pdf'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
 '::text) <> ''::text)))
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
         SubPlan 6
-          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.165..0.165 rows=0 loops=1)
+          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.154..0.154 rows=0 loops=1)
                 Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
 '::text) <> ''::text)))
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
 Planning:
   Buffers: shared hit=7
-Planning Time: 0.289 ms
-Execution Time: 1.070 ms
+Planning Time: 0.687 ms
+Execution Time: 2.133 ms
 ```
 
 ## Availability subset and primary CV
 
-Execution time: 1.0 ms
+Execution time: 1.8 ms
 
 ```
-Limit  (cost=1.97..660.89 rows=25 width=324) (actual time=0.924..0.932 rows=25 loops=1)
-  Buffers: shared hit=358
-  ->  Result  (cost=1.97..35135.71 rows=1333 width=324) (actual time=0.923..0.930 rows=25 loops=1)
-        Buffers: shared hit=358
-        ->  Incremental Sort  (cost=1.97..1927.34 rows=1333 width=321) (actual time=0.073..0.075 rows=25 loops=1)
+Limit  (cost=1.97..660.89 rows=25 width=324) (actual time=1.694..1.708 rows=25 loops=1)
+  Buffers: shared hit=357
+  ->  Result  (cost=1.97..35135.71 rows=1333 width=324) (actual time=1.693..1.705 rows=25 loops=1)
+        Buffers: shared hit=357
+        ->  Incremental Sort  (cost=1.97..1927.34 rows=1333 width=321) (actual time=0.083..0.087 rows=25 loops=1)
               Sort Key: c."UpdatedAtUtc" DESC, c."Id"
               Presorted Key: c."UpdatedAtUtc"
               Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 37kB  Peak Memory: 37kB
-              Buffers: shared hit=106
-              ->  Nested Loop Semi Join  (cost=0.56..1867.36 rows=1333 width=321) (actual time=0.021..0.056 rows=26 loops=1)
-                    Buffers: shared hit=106
-                    ->  Index Scan Backward using "IX_CND_Candidates_IsActive_UpdatedAtUtc" on "CND_Candidates" c  (cost=0.28..888.03 rows=2000 width=321) (actual time=0.012..0.026 rows=26 loops=1)
+              Buffers: shared hit=105
+              ->  Nested Loop Semi Join  (cost=0.56..1867.36 rows=1333 width=321) (actual time=0.026..0.064 rows=26 loops=1)
+                    Buffers: shared hit=105
+                    ->  Index Scan Backward using "IX_CND_Candidates_IsActive_UpdatedAtUtc" on "CND_Candidates" c  (cost=0.28..888.03 rows=2000 width=321) (actual time=0.014..0.029 rows=26 loops=1)
                           Index Cond: ("IsActive" = true)
                           Filter: (("AvailabilityState")::text = ANY ('{available,unavailable}'::text[]))
                           Rows Removed by Filter: 12
-                          Buffers: shared hit=28
+                          Buffers: shared hit=27
                     ->  Index Only Scan using "UX_CND_Documents_CandidateId_Primary" on "CND_Documents" c0  (cost=0.28..0.48 rows=1 width=16) (actual time=0.001..0.001 rows=1 loops=26)
                           Index Cond: ("CandidateId" = c."Id")
                           Heap Fetches: 26
                           Buffers: shared hit=78
         SubPlan 2
-          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.005..0.275 rows=2000 loops=1)
+          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.006..0.470 rows=2000 loops=1)
                 Filter: "IsPrimary"
                 Buffers: shared hit=84
         SubPlan 4
-          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..124.00 rows=1 width=16) (actual time=0.170..0.170 rows=0 loops=1)
+          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..124.00 rows=1 width=16) (actual time=0.509..0.509 rows=0 loops=1)
                 Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("ContentType")::text = 'application/pdf'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
 '::text) <> ''::text)))
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
         SubPlan 6
-          ->  Seq Scan on "CND_Documents" c3  (cost=0.00..119.00 rows=1 width=16) (actual time=0.164..0.164 rows=0 loops=1)
+          ->  Seq Scan on "CND_Documents" c3  (cost=0.00..119.00 rows=1 width=16) (actual time=0.198..0.198 rows=0 loops=1)
                 Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
 '::text) <> ''::text)))
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
 Planning:
   Buffers: shared hit=20
-Planning Time: 0.379 ms
-Execution Time: 1.021 ms
+Planning Time: 0.432 ms
+Execution Time: 1.832 ms
 ```
 
 ## Checked from a recent date
 
-Execution time: 1.0 ms
+Execution time: 2.4 ms
 
 ```
-Limit  (cost=223.72..846.60 rows=25 width=325) (actual time=0.943..0.950 rows=25 loops=1)
-  Buffers: shared hit=352
-  ->  Result  (cost=223.72..2715.22 rows=100 width=325) (actual time=0.942..0.948 rows=25 loops=1)
-        Buffers: shared hit=352
-        ->  Sort  (cost=223.72..223.97 rows=100 width=322) (actual time=0.172..0.173 rows=25 loops=1)
+Limit  (cost=223.72..846.60 rows=25 width=325) (actual time=2.079..2.093 rows=25 loops=1)
+  Buffers: shared hit=355
+  ->  Result  (cost=223.72..2715.22 rows=100 width=325) (actual time=2.077..2.089 rows=25 loops=1)
+        Buffers: shared hit=355
+        ->  Sort  (cost=223.72..223.97 rows=100 width=322) (actual time=0.549..0.553 rows=25 loops=1)
               Sort Key: ((c."AvailabilityCheckedOn" IS NULL)), c."AvailabilityCheckedOn" DESC, c."Id"
               Sort Method: top-N heapsort  Memory: 44kB
-              Buffers: shared hit=100
-              ->  Bitmap Heap Scan on "CND_Candidates" c  (cost=5.06..220.90 rows=100 width=322) (actual time=0.032..0.118 rows=100 loops=1)
+              Buffers: shared hit=103
+              ->  Bitmap Heap Scan on "CND_Candidates" c  (cost=5.06..220.90 rows=100 width=322) (actual time=0.117..0.326 rows=100 loops=1)
                     Recheck Cond: (("AvailabilityCheckedOn" >= '2026-09-01'::date) AND "IsActive")
-                    Heap Blocks: exact=97
-                    Buffers: shared hit=100
-                    ->  Bitmap Index Scan on "IX_CND_Candidates_IsActive_AvailabilityCheckedOn"  (cost=0.00..5.03 rows=100 width=0) (actual time=0.017..0.017 rows=100 loops=1)
+                    Heap Blocks: exact=100
+                    Buffers: shared hit=103
+                    ->  Bitmap Index Scan on "IX_CND_Candidates_IsActive_AvailabilityCheckedOn"  (cost=0.00..5.03 rows=100 width=0) (actual time=0.060..0.061 rows=100 loops=1)
                           Index Cond: ("AvailabilityCheckedOn" >= '2026-09-01'::date)
                           Buffers: shared hit=3
         SubPlan 2
-          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.004..0.225 rows=2000 loops=1)
+          ->  Seq Scan on "CND_Documents" c0  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.014..0.629 rows=2000 loops=1)
                 Filter: "IsPrimary"
                 Buffers: shared hit=84
         SubPlan 4
-          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..124.00 rows=1 width=16) (actual time=0.152..0.152 rows=0 loops=1)
+          ->  Seq Scan on "CND_Documents" c1  (cost=0.00..124.00 rows=1 width=16) (actual time=0.174..0.174 rows=0 loops=1)
                 Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("ContentType")::text = 'application/pdf'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
 '::text) <> ''::text)))
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
         SubPlan 6
-          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.146..0.146 rows=0 loops=1)
+          ->  Seq Scan on "CND_Documents" c2  (cost=0.00..119.00 rows=1 width=16) (actual time=0.149..0.149 rows=0 loops=1)
                 Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
 '::text) <> ''::text)))
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
 Planning:
   Buffers: shared hit=7
-Planning Time: 0.225 ms
-Execution Time: 1.048 ms
+Planning Time: 0.682 ms
+Execution Time: 2.372 ms
 ```
 
 ## Skill ANY across three values
 
-Execution time: 1.5 ms
+Execution time: 2.0 ms
 
 ```
-Limit  (cost=29.10..1373.00 rows=25 width=324) (actual time=1.351..1.360 rows=25 loops=1)
-  Buffers: shared hit=680
-  ->  Result  (cost=29.10..141138.97 rows=2625 width=324) (actual time=1.350..1.358 rows=25 loops=1)
-        Buffers: shared hit=680
-        ->  Incremental Sort  (cost=29.10..75743.65 rows=2625 width=321) (actual time=0.548..0.550 rows=25 loops=1)
+Limit  (cost=29.10..1373.00 rows=25 width=324) (actual time=1.792..1.803 rows=25 loops=1)
+  Buffers: shared hit=681
+  ->  Result  (cost=29.10..141138.97 rows=2625 width=324) (actual time=1.791..1.800 rows=25 loops=1)
+        Buffers: shared hit=681
+        ->  Incremental Sort  (cost=29.10..75743.65 rows=2625 width=321) (actual time=0.859..0.862 rows=25 loops=1)
               Sort Key: c."UpdatedAtUtc" DESC, c."Id"
               Presorted Key: c."UpdatedAtUtc"
               Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 37kB  Peak Memory: 37kB
-              Buffers: shared hit=428
-              ->  Index Scan Backward using "IX_CND_Candidates_IsActive_UpdatedAtUtc" on "CND_Candidates" c  (cost=0.28..75625.53 rows=2625 width=321) (actual time=0.504..0.532 rows=26 loops=1)
+              Buffers: shared hit=429
+              ->  Index Scan Backward using "IX_CND_Candidates_IsActive_UpdatedAtUtc" on "CND_Candidates" c  (cost=0.28..75625.53 rows=2625 width=321) (actual time=0.793..0.833 rows=26 loops=1)
                     Index Cond: ("IsActive" = true)
                     Filter: ((ANY ("Id" = (hashed SubPlan 8).col1)) OR (ANY ("Id" = (hashed SubPlan 10).col1)) OR (ANY ("Id" = (hashed SubPlan 12).col1)))
                     Rows Removed by Filter: 43
-                    Buffers: shared hit=428
+                    Buffers: shared hit=429
                     SubPlan 8
-                      ->  Bitmap Heap Scan on "CND_CandidateSkills" c0  (cost=7.28..140.64 rows=387 width=16) (actual time=0.029..0.138 rows=387 loops=1)
-                            Recheck Cond: ("SkillId" = ANY ('{01a11536-ccb7-7720-af6e-0a6eb63b48c6}'::uuid[]))
-                            Heap Blocks: exact=122
-                            Buffers: shared hit=124
-                            ->  Bitmap Index Scan on "IX_CND_CandidateSkills_SkillId_SkillFamily"  (cost=0.00..7.19 rows=387 width=0) (actual time=0.017..0.017 rows=387 loops=1)
-                                  Index Cond: ("SkillId" = ANY ('{01a11536-ccb7-7720-af6e-0a6eb63b48c6}'::uuid[]))
-                                  Buffers: shared hit=2
-                    SubPlan 10
-                      ->  Bitmap Heap Scan on "CND_CandidateSkills" c1  (cost=7.05..140.07 rows=357 width=16) (actual time=0.024..0.095 rows=357 loops=1)
-                            Recheck Cond: ("SkillId" = ANY ('{01a11536-ccb7-7ddf-aa50-f9acf1e05c94}'::uuid[]))
+                      ->  Bitmap Heap Scan on "CND_CandidateSkills" c0  (cost=7.28..140.64 rows=387 width=16) (actual time=0.063..0.275 rows=387 loops=1)
+                            Recheck Cond: ("SkillId" = ANY ('{01a1a74f-5a92-7032-af3b-ac0cd156e9a6}'::uuid[]))
                             Heap Blocks: exact=125
                             Buffers: shared hit=127
-                            ->  Bitmap Index Scan on "IX_CND_CandidateSkills_SkillId_SkillFamily"  (cost=0.00..6.96 rows=357 width=0) (actual time=0.015..0.015 rows=357 loops=1)
-                                  Index Cond: ("SkillId" = ANY ('{01a11536-ccb7-7ddf-aa50-f9acf1e05c94}'::uuid[]))
+                            ->  Bitmap Index Scan on "IX_CND_CandidateSkills_SkillId_SkillFamily"  (cost=0.00..7.19 rows=387 width=0) (actual time=0.040..0.041 rows=387 loops=1)
+                                  Index Cond: ("SkillId" = ANY ('{01a1a74f-5a92-7032-af3b-ac0cd156e9a6}'::uuid[]))
+                                  Buffers: shared hit=2
+                    SubPlan 10
+                      ->  Bitmap Heap Scan on "CND_CandidateSkills" c1  (cost=7.05..140.07 rows=357 width=16) (actual time=0.032..0.132 rows=357 loops=1)
+                            Recheck Cond: ("SkillId" = ANY ('{01a1a74f-5a92-7f75-b213-97be49552df0}'::uuid[]))
+                            Heap Blocks: exact=125
+                            Buffers: shared hit=127
+                            ->  Bitmap Index Scan on "IX_CND_CandidateSkills_SkillId_SkillFamily"  (cost=0.00..6.96 rows=357 width=0) (actual time=0.019..0.019 rows=357 loops=1)
+                                  Index Cond: ("SkillId" = ANY ('{01a1a74f-5a92-7f75-b213-97be49552df0}'::uuid[]))
                                   Buffers: shared hit=2
                     SubPlan 12
-                      ->  Bitmap Heap Scan on "CND_CandidateSkills" c2  (cost=7.29..140.66 rows=388 width=16) (actual time=0.023..0.095 rows=388 loops=1)
-                            Recheck Cond: ("SkillId" = ANY ('{01a11536-ccb7-7e0e-8052-6882a9238e9b}'::uuid[]))
-                            Heap Blocks: exact=124
-                            Buffers: shared hit=126
-                            ->  Bitmap Index Scan on "IX_CND_CandidateSkills_SkillId_SkillFamily"  (cost=0.00..7.20 rows=388 width=0) (actual time=0.014..0.014 rows=388 loops=1)
-                                  Index Cond: ("SkillId" = ANY ('{01a11536-ccb7-7e0e-8052-6882a9238e9b}'::uuid[]))
+                      ->  Bitmap Heap Scan on "CND_CandidateSkills" c2  (cost=7.29..140.66 rows=388 width=16) (actual time=0.032..0.124 rows=388 loops=1)
+                            Recheck Cond: ("SkillId" = ANY ('{01a1a74f-5a92-75ee-bbd7-9eefa60d1834}'::uuid[]))
+                            Heap Blocks: exact=125
+                            Buffers: shared hit=127
+                            ->  Bitmap Index Scan on "IX_CND_CandidateSkills_SkillId_SkillFamily"  (cost=0.00..7.20 rows=388 width=0) (actual time=0.017..0.017 rows=388 loops=1)
+                                  Index Cond: ("SkillId" = ANY ('{01a1a74f-5a92-75ee-bbd7-9eefa60d1834}'::uuid[]))
                                   Buffers: shared hit=2
         SubPlan 2
-          ->  Seq Scan on "CND_Documents" c3  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.004..0.231 rows=2000 loops=1)
+          ->  Seq Scan on "CND_Documents" c3  (cost=0.00..104.00 rows=2000 width=16) (actual time=0.006..0.304 rows=2000 loops=1)
                 Filter: "IsPrimary"
                 Buffers: shared hit=84
         SubPlan 4
-          ->  Seq Scan on "CND_Documents" c4  (cost=0.00..124.00 rows=1 width=16) (actual time=0.184..0.185 rows=0 loops=1)
+          ->  Seq Scan on "CND_Documents" c4  (cost=0.00..124.00 rows=1 width=16) (actual time=0.167..0.167 rows=0 loops=1)
                 Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("ContentType")::text = 'application/pdf'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
 '::text) <> ''::text)))
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
         SubPlan 6
-          ->  Seq Scan on "CND_Documents" c5  (cost=0.00..119.00 rows=1 width=16) (actual time=0.147..0.147 rows=0 loops=1)
+          ->  Seq Scan on "CND_Documents" c5  (cost=0.00..119.00 rows=1 width=16) (actual time=0.148..0.148 rows=0 loops=1)
                 Filter: ("IsPrimary" AND (("ScanState")::text = 'Clean'::text) AND (("SourceKey" IS NULL) OR (btrim(("Sha256")::text, ' 	
 '::text) <> ''::text)))
                 Rows Removed by Filter: 2000
                 Buffers: shared hit=84
 Planning:
   Buffers: shared hit=13
-Planning Time: 0.342 ms
-Execution Time: 1.525 ms
+Planning Time: 0.692 ms
+Execution Time: 2.043 ms
 ```
 
 ## Skill ALL across three values
@@ -459,50 +459,49 @@ Execution Time: 1.525 ms
 Execution time: 1.7 ms
 
 ```
-Limit  (cost=693.25..842.74 rows=6 width=324) (actual time=1.488..1.500 rows=3 loops=1)
-  Buffers: shared hit=719
-  ->  Result  (cost=693.25..842.74 rows=6 width=324) (actual time=1.487..1.499 rows=3 loops=1)
-        Buffers: shared hit=719
-        ->  Sort  (cost=693.25..693.26 rows=6 width=321) (actual time=1.452..1.454 rows=3 loops=1)
+Limit  (cost=693.08..842.57 rows=6 width=324) (actual time=1.468..1.483 rows=3 loops=1)
+  Buffers: shared hit=677
+  ->  Result  (cost=693.08..842.57 rows=6 width=324) (actual time=1.467..1.481 rows=3 loops=1)
+        Buffers: shared hit=677
+        ->  Sort  (cost=693.08..693.10 rows=6 width=321) (actual time=1.429..1.433 rows=3 loops=1)
               Sort Key: c."UpdatedAtUtc" DESC, c."Id"
               Sort Method: quicksort  Memory: 26kB
-              Buffers: shared hit=692
-              ->  Nested Loop Semi Join  (cost=290.32..693.17 rows=6 width=321) (actual time=0.708..1.442 rows=3 loops=1)
-                    Buffers: shared hit=692
-                    ->  Hash Semi Join  (cost=290.04..667.34 rows=46 width=353) (actual time=0.506..1.370 rows=30 loops=1)
+              Buffers: shared hit=650
+              ->  Nested Loop Semi Join  (cost=290.32..693.01 rows=6 width=321) (actual time=0.631..1.422 rows=3 loops=1)
+                    Buffers: shared hit=650
+                    ->  Hash Semi Join  (cost=290.04..667.34 rows=46 width=353) (actual time=0.438..1.359 rows=30 loops=1)
                           Hash Cond: (c."Id" = c2."CandidateId")
-                          Buffers: shared hit=586
-                          ->  Hash Semi Join  (cost=144.53..520.27 rows=357 width=337) (actual time=0.255..1.122 rows=357 loops=1)
+                          Buffers: shared hit=587
+                          ->  Hash Semi Join  (cost=144.53..520.27 rows=357 width=337) (actual time=0.166..1.083 rows=357 loops=1)
                                 Hash Cond: (c."Id" = c1."CandidateId")
                                 Buffers: shared hit=460
-                                ->  Seq Scan on "CND_Candidates" c  (cost=0.00..363.00 rows=3000 width=321) (actual time=0.021..0.711 rows=3000 loops=1)
+                                ->  Seq Scan on "CND_Candidates" c  (cost=0.00..363.00 rows=3000 width=321) (actual time=0.007..0.745 rows=3000 loops=1)
                                       Filter: "IsActive"
                                       Buffers: shared hit=333
-                                ->  Hash  (cost=140.07..140.07 rows=357 width=16) (actual time=0.222..0.222 rows=357 loops=1)
+                                ->  Hash  (cost=140.07..140.07 rows=357 width=16) (actual time=0.149..0.150 rows=357 loops=1)
                                       Buckets: 1024  Batches: 1  Memory Usage: 25kB
                                       Buffers: shared hit=127
-                                      ->  Bitmap Heap Scan on "CND_CandidateSkills" c1  (cost=7.05..140.07 rows=357 width=16) (actual time=0.028..0.177 rows=357 loops=1)
-                                            Recheck Cond: ("SkillId" = ANY ('{01a11536-ccb7-7ddf-aa50-f9acf1e05c94}'::uuid[]))
+                                      ->  Bitmap Heap Scan on "CND_CandidateSkills" c1  (cost=7.05..140.07 rows=357 width=16) (actual time=0.027..0.104 rows=357 loops=1)
+                                            Recheck Cond: ("SkillId" = ANY ('{01a1a74f-5a92-7f75-b213-97be49552df0}'::uuid[]))
                                             Heap Blocks: exact=125
                                             Buffers: shared hit=127
-                                            ->  Bitmap Index Scan on "IX_CND_CandidateSkills_SkillId_SkillFamily"  (cost=0.00..6.96 rows=357 width=0) (actual time=0.018..0.018 rows=357 loops=1)
-                                                  Index Cond: ("SkillId" = ANY ('{01a11536-ccb7-7ddf-aa50-f9acf1e05c94}'::uuid[]))
+                                            ->  Bitmap Index Scan on "IX_CND_CandidateSkills_SkillId_SkillFamily"  (cost=0.00..6.96 rows=357 width=0) (actual time=0.017..0.017 rows=357 loops=1)
+                                                  Index Cond: ("SkillId" = ANY ('{01a1a74f-5a92-7f75-b213-97be49552df0}'::uuid[]))
                                                   Buffers: shared hit=2
-                          ->  Hash  (cost=140.66..140.66 rows=388 width=16) (actual time=0.214..0.214 rows=388 loops=1)
+                          ->  Hash  (cost=140.66..140.66 rows=388 width=16) (actual time=0.237..0.238 rows=388 loops=1)
                                 Buckets: 1024  Batches: 1  Memory Usage: 27kB
-                                Buffers: shared hit=126
-                                ->  Bitmap Heap Scan on "CND_CandidateSkills" c2  (cost=7.29..140.66 rows=388 width=16) (actual time=0.035..0.162 rows=388 loops=1)
-                                      Recheck Cond: ("SkillId" = ANY ('{01a11536-ccb7-7e0e-8052-6882a9238e9b}'::uuid[]))
-                                      Heap Blocks: exact=124
-                                      Buffers: shared hit=126
-                                      ->  Bitmap Index Scan on "IX_CND_CandidateSkills_SkillId_SkillFamily"  (cost=0.00..7.20 rows=388 width=0) (actual time=0.020..0.020 rows=388 loops=1)
-                                            Index Cond: ("SkillId" = ANY ('{01a11536-ccb7-7e0e-8052-6882a9238e9b}'::uuid[]))
+                                Buffers: shared hit=127
+                                ->  Bitmap Heap Scan on "CND_CandidateSkills" c2  (cost=7.29..140.66 rows=388 width=16) (actual time=0.036..0.187 rows=388 loops=1)
+                                      Recheck Cond: ("SkillId" = ANY ('{01a1a74f-5a92-75ee-bbd7-9eefa60d1834}'::uuid[]))
+                                      Heap Blocks: exact=125
+                                      Buffers: shared hit=127
+                                      ->  Bitmap Index Scan on "IX_CND_CandidateSkills_SkillId_SkillFamily"  (cost=0.00..7.20 rows=388 width=0) (actual time=0.022..0.022 rows=388 loops=1)
+                                            Index Cond: ("SkillId" = ANY ('{01a1a74f-5a92-75ee-bbd7-9eefa60d1834}'::uuid[]))
                                             Buffers: shared hit=2
-                    ->  Index Scan using "IX_CND_CandidateSkills_CandidateId" on "CND_CandidateSkills" c0  (cost=0.29..0.56 rows=1 width=16) (actual time=0.002..0.002 rows=0 loops=30)
-                          Index Cond: ("CandidateId" = c."Id")
-                          Filter: (("SkillId" = ANY ('{01a11536-ccb7-7720-af6e-0a6eb63b48c6}'::uuid[])) AND ("LevelId" = ANY ('{01a11536-ccb7-7035-ac0f-bc2bd065f88c,01a11536-ccb7-717f-81c2-8df777c83880,01a11536-ccb7-746f-ac86-9b910b585008,01a11536-ccb7-7ea1-a9f2-4ef59e729976}'::uuid[])))
-                          Rows Removed by Filter: 3
-                          Buffers: shared hit=106
+                    ->  Index Scan using "UX_CND_CandidateSkills_CandidateId_SkillId" on "CND_CandidateSkills" c0  (cost=0.29..0.56 rows=1 width=16) (actual time=0.002..0.002 rows=0 loops=30)
+                          Index Cond: (("CandidateId" = c."Id") AND ("SkillId" = ANY ('{01a1a74f-5a92-7032-af3b-ac0cd156e9a6}'::uuid[])))
+                          Filter: ("LevelId" = ANY ('{01a1a74f-5a92-7566-ae9f-2b18292ff52e,01a1a74f-5a92-7594-87cc-d834b0f0acc1,01a1a74f-5a92-7bf3-add9-b016bb8c8e27,01a1a74f-5a92-7cf8-a0f1-5e141e1e600e}'::uuid[]))
+                          Buffers: shared hit=63
         SubPlan 1
           ->  Index Only Scan using "UX_CND_Documents_CandidateId_Primary" on "CND_Documents" c3  (cost=0.28..8.29 rows=1 width=0) (actual time=0.007..0.007 rows=1 loops=3)
                 Index Cond: ("CandidateId" = c."Id")
@@ -524,61 +523,61 @@ Limit  (cost=693.25..842.74 rows=6 width=324) (actual time=1.488..1.500 rows=3 l
                 Buffers: shared hit=9
 Planning:
   Buffers: shared hit=70
-Planning Time: 1.080 ms
-Execution Time: 1.663 ms
+Planning Time: 1.117 ms
+Execution Time: 1.742 ms
 ```
 
 ## Every SQL family combined
 
-Execution time: 0.4 ms
+Execution time: 0.5 ms
 
 ```
-Limit  (cost=407.45..432.37 rows=1 width=324) (actual time=0.257..0.259 rows=0 loops=1)
+Limit  (cost=407.45..432.37 rows=1 width=324) (actual time=0.338..0.340 rows=0 loops=1)
   Buffers: shared hit=325
-  ->  Result  (cost=407.45..432.37 rows=1 width=324) (actual time=0.256..0.258 rows=0 loops=1)
+  ->  Result  (cost=407.45..432.37 rows=1 width=324) (actual time=0.337..0.339 rows=0 loops=1)
         Buffers: shared hit=325
-        ->  Sort  (cost=407.45..407.46 rows=1 width=321) (actual time=0.256..0.257 rows=0 loops=1)
+        ->  Sort  (cost=407.45..407.46 rows=1 width=321) (actual time=0.336..0.338 rows=0 loops=1)
               Sort Key: c."UpdatedAtUtc" DESC, c."Id"
               Sort Method: quicksort  Memory: 25kB
               Buffers: shared hit=325
-              ->  Nested Loop Semi Join  (cost=55.88..407.44 rows=1 width=321) (actual time=0.250..0.252 rows=0 loops=1)
+              ->  Nested Loop Semi Join  (cost=55.88..407.44 rows=1 width=321) (actual time=0.330..0.332 rows=0 loops=1)
                     Buffers: shared hit=325
-                    ->  Nested Loop Semi Join  (cost=55.60..406.43 rows=1 width=369) (actual time=0.160..0.244 rows=1 loops=1)
-                          Buffers: shared hit=321
-                          ->  Nested Loop Semi Join  (cost=55.32..405.33 rows=1 width=353) (actual time=0.148..0.232 rows=1 loops=1)
-                                Buffers: shared hit=318
-                                ->  Nested Loop  (cost=55.04..395.40 rows=12 width=337) (actual time=0.095..0.200 rows=18 loops=1)
-                                      Buffers: shared hit=264
-                                      ->  HashAggregate  (cost=54.76..55.50 rows=74 width=16) (actual time=0.080..0.085 rows=74 loops=1)
+                    ->  Nested Loop Semi Join  (cost=55.60..406.43 rows=1 width=369) (actual time=0.195..0.321 rows=1 loops=1)
+                          Buffers: shared hit=322
+                          ->  Nested Loop Semi Join  (cost=55.32..405.33 rows=1 width=353) (actual time=0.183..0.309 rows=1 loops=1)
+                                Buffers: shared hit=319
+                                ->  Nested Loop  (cost=55.04..395.40 rows=12 width=337) (actual time=0.153..0.266 rows=18 loops=1)
+                                      Buffers: shared hit=265
+                                      ->  HashAggregate  (cost=54.76..55.50 rows=74 width=16) (actual time=0.075..0.082 rows=74 loops=1)
                                             Group Key: c3."CandidateId"
                                             Batches: 1  Memory Usage: 24kB
-                                            Buffers: shared hit=42
-                                            ->  Bitmap Heap Scan on "CND_CandidatePrograms" c3  (cost=4.85..54.58 rows=74 width=16) (actual time=0.018..0.065 rows=74 loops=1)
-                                                  Recheck Cond: ("ProgramId" = ANY ('{01a11536-ccb7-70da-a695-0ea27f713f7c}'::uuid[]))
-                                                  Heap Blocks: exact=40
-                                                  Buffers: shared hit=42
-                                                  ->  Bitmap Index Scan on "IX_CND_CandidatePrograms_ProgramId_ProgramFamily"  (cost=0.00..4.83 rows=74 width=0) (actual time=0.011..0.011 rows=74 loops=1)
-                                                        Index Cond: ("ProgramId" = ANY ('{01a11536-ccb7-70da-a695-0ea27f713f7c}'::uuid[]))
+                                            Buffers: shared hit=43
+                                            ->  Bitmap Heap Scan on "CND_CandidatePrograms" c3  (cost=4.85..54.58 rows=74 width=16) (actual time=0.023..0.061 rows=74 loops=1)
+                                                  Recheck Cond: ("ProgramId" = ANY ('{01a1a74f-5a92-70e4-adec-6fdb9345def1}'::uuid[]))
+                                                  Heap Blocks: exact=41
+                                                  Buffers: shared hit=43
+                                                  ->  Bitmap Index Scan on "IX_CND_CandidatePrograms_ProgramId_ProgramFamily"  (cost=0.00..4.83 rows=74 width=0) (actual time=0.015..0.016 rows=74 loops=1)
+                                                        Index Cond: ("ProgramId" = ANY ('{01a1a74f-5a92-70e4-adec-6fdb9345def1}'::uuid[]))
                                                         Buffers: shared hit=2
-                                      ->  Index Scan using "PK_CND_Candidates" on "CND_Candidates" c  (cost=0.28..4.68 rows=1 width=321) (actual time=0.001..0.001 rows=0 loops=74)
+                                      ->  Index Scan using "PK_CND_Candidates" on "CND_Candidates" c  (cost=0.28..4.68 rows=1 width=321) (actual time=0.002..0.002 rows=0 loops=74)
                                             Index Cond: ("Id" = c3."CandidateId")
                                             Filter: ("IsActive" AND (("AvailabilityState")::text = ANY ('{available}'::text[])) AND ("AvailabilityCheckedOn" >= '2026-01-01'::date))
                                             Rows Removed by Filter: 1
                                             Buffers: shared hit=222
                                 ->  Index Scan using "IX_CND_CandidateLanguages_CandidateId" on "CND_CandidateLanguages" c2  (cost=0.28..0.83 rows=1 width=16) (actual time=0.002..0.002 rows=0 loops=18)
                                       Index Cond: ("CandidateId" = c."Id")
-                                      Filter: (("LanguageId" = ANY ('{01a11536-ccb7-7f1c-88d5-af6c3d23f24a}'::uuid[])) AND ("LevelId" = ANY ('{01a11536-ccb7-7217-9870-49fb41518cfd,01a11536-ccb7-7493-9e76-286f08b231ea,01a11536-ccb7-7697-bc30-5c868dc436d8,01a11536-ccb7-7705-9eb7-199727e1971f,01a11536-ccb7-7ad0-a716-718a9cb52daa,01a11536-ccb7-7d89-b091-c5be41735b90}'::uuid[])))
+                                      Filter: (("LanguageId" = ANY ('{01a1a74f-5a92-7303-a23f-75695fde9594}'::uuid[])) AND ("LevelId" = ANY ('{01a1a74f-5a92-7288-b972-9e5e404625ca,01a1a74f-5a92-762f-b487-4686df040285,01a1a74f-5a92-7998-a46e-a1cd54fcc3b5,01a1a74f-5a92-7bf7-b3b4-2405702fcf38,01a1a74f-5a92-7ea5-9f66-94c25b4041e8,01a1a74f-5a92-7ef6-8bc6-e102b652e35c}'::uuid[])))
                                       Rows Removed by Filter: 1
                                       Buffers: shared hit=54
                           ->  Index Only Scan using "UX_CND_Documents_CandidateId_Primary" on "CND_Documents" c0  (cost=0.28..1.10 rows=1 width=16) (actual time=0.011..0.011 rows=1 loops=1)
                                 Index Cond: ("CandidateId" = c."Id")
                                 Heap Fetches: 1
                                 Buffers: shared hit=3
-                    ->  Index Scan using "IX_CND_CandidateSkills_CandidateId" on "CND_CandidateSkills" c1  (cost=0.29..0.65 rows=1 width=16) (actual time=0.007..0.007 rows=0 loops=1)
+                    ->  Index Scan using "IX_CND_CandidateSkills_CandidateId" on "CND_CandidateSkills" c1  (cost=0.29..0.65 rows=1 width=16) (actual time=0.009..0.009 rows=0 loops=1)
                           Index Cond: ("CandidateId" = c0."CandidateId")
-                          Filter: ("SkillId" = ANY ('{01a11536-ccb7-7720-af6e-0a6eb63b48c6}'::uuid[]))
+                          Filter: ("SkillId" = ANY ('{01a1a74f-5a92-7032-af3b-ac0cd156e9a6}'::uuid[]))
                           Rows Removed by Filter: 3
-                          Buffers: shared hit=4
+                          Buffers: shared hit=3
         SubPlan 1
           ->  Index Only Scan using "UX_CND_Documents_CandidateId_Primary" on "CND_Documents" c4  (cost=0.28..8.29 rows=1 width=0) (never executed)
                 Index Cond: ("CandidateId" = c."Id")
@@ -595,7 +594,7 @@ Limit  (cost=407.45..432.37 rows=1 width=324) (actual time=0.257..0.259 rows=0 l
 '::text) <> ''::text)))
 Planning:
   Buffers: shared hit=95
-Planning Time: 1.332 ms
-Execution Time: 0.374 ms
+Planning Time: 1.491 ms
+Execution Time: 0.486 ms
 ```
 

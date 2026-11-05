@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router';
 import { ConfirmDialog } from '../../shared/components/confirm-dialog';
+import { SessionExpiredDialog } from '../auth/session-expired-dialog';
 import { useServices } from '../di/services-context';
 import { useSignal } from '../state/use-signal';
 import { PrimaryNav } from './primary-nav';
@@ -51,6 +52,7 @@ export function AppLayout() {
         ))}
       </div>
       <ConfirmDialog />
+      <SessionExpiredDialog />
     </div>
   );
 }

@@ -110,18 +110,32 @@ en modo de lectura; «Datos principales», «Competencias», «Formación», «E
 «Documentos» tienen un botón «Editar» que convierte ese panel, en su sitio, en el editor de
 siempre. «Auditoría» no se edita.
 
-- **Datos principales, Competencias, Formación y Experiencia** guardan un borrador: nada se
-  escribe hasta pulsar «Guardar» en ese panel, que guarda solo ese panel; «Cancelar» descarta el
-  borrador. En «Competencias» solo se guardan las familias que han cambiado; si una falla, las
-  demás quedan guardadas y un nuevo «Guardar» reintenta solo la que falló.
-- **Formación y Experiencia** muestran a la izquierda de cada entrada sus años (`2019–2024`,
-  `2024` o `2020–actualidad`; en formación, el año de fin). Desde KTL-43 cada entrada se puede
-  corregir con «Editar», que la carga en el formulario del panel; «Actualizar» la cambia en su
-  sitio dentro del borrador, que se guarda con «Guardar» como el resto.
+- **Datos principales y Competencias** guardan un borrador: nada se escribe hasta pulsar
+  «Guardar» en ese panel, que guarda solo ese panel; «Cancelar» descarta el borrador. En
+  «Competencias» solo se guardan las familias que han cambiado; si una falla, las demás quedan
+  guardadas y un nuevo «Guardar» reintenta solo la que falló.
+- **Formación y Experiencia** guardan cada entrada al momento (KTL-46): «Añadir» y «Actualizar»
+  la escriben sin más pasos, «Quitar» pide confirmación y «Cancelar edición» solo vacía el
+  formulario. El formulario aparece solo al pulsar «Nueva formación» / «Nueva experiencia» o
+  «Editar» en una entrada, y se oculta al guardar o al pulsar «Cancelar». No hay «Guardar» ni
+  «Cancelar» de panel; el panel se cierra con «Hecho», arriba a la derecha. Cada entrada muestra a
+  la izquierda su periodo (en experiencia, `2020 (ene) – 2020 (dic)`, `2024 (jun)` o
+  `2019 (mar) – actualidad`; en formación, el año de fin) y se corrige con «Editar» (KTL-43). Una
+  experiencia sin fechas empieza a la izquierda, sin hueco.
+- **Experiencia** (KTL-46) tiene una «Descripción» con formato (negrita, cursiva y listas) en un
+  formulario de tres columnas, con fechas de mes y año que no pueden ser posteriores al mes actual.
+  El «Sector» es opcional. Los «Años de experiencia» llevan un decimal (sin él si es un número
+  entero) y se calculan a partir de las fechas cuando las hay. En modo de lectura, cada entrada con
+  descripción se despliega para mostrarla.
 - **Notas y Documentos** mantienen sus acciones inmediatas (añadir, editar, retirar, subir,
-  marcar como principal, quitar); «Hecho» vuelve al modo de lectura.
+  marcar como principal, quitar); «Hecho», arriba a la derecha, vuelve al modo de lectura.
+- **El panel en edición** se distingue con un fondo de color claro (KTL-46).
 - **Un panel a la vez.** Abrir otro panel con cambios sin guardar pide confirmación, igual que
   salir de la página o cerrar la pestaña.
+- **La sesión caduca sin perder cambios** (KTL-46). Si la sesión termina mientras un panel tiene
+  cambios sin guardar, la página y lo escrito se conservan y «Iniciar sesión» permite volver a
+  entrar sin salir de ella; después, el panel repite el guardado. Consulta la
+  [nota de versión KTL-46](docs/ktl-46/release-notes.md).
 
 «Editar» aparece según el permiso que comprueba la API: `candidates.update` para todos los paneles
 salvo «Documentos», que depende solo de `documents.upload`. En un candidato dado de baja no se

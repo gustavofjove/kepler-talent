@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { SessionExpiredNotice } from '../../../core/auth/session-expired-notice';
+import { useSessionRetry } from '../../../core/auth/use-session-retry';
 import { usePermission, useServices } from '../../../core/di/services-context';
 import { useErrorToast } from '../../../core/services/use-error-toast';
 import { FormError } from '../../../shared/components/form-error';
@@ -40,6 +42,7 @@ export function CandidateDocuments({ candidate, readOnly = false, onDirtyChange 
   const { t } = useTranslation();
   const { documentService, toastService, confirmDialogService } = useServices();
   const notifyError = useErrorToast();
+  const session = useSessionRetry();
   const [documents, setDocuments] = useState<CandidateDocument[]>(candidate?.documents ?? []);
   const [selectedFile, setSelectedFile] = useState<File | undefined>();
   const [isPrimary, setIsPrimary] = useState(true);
@@ -135,6 +138,8 @@ export function CandidateDocuments({ candidate, readOnly = false, onDirtyChange 
       toastService.show(t('candidate.profile.documents.uploaded'), 'success');
       observe(uploaded);
     } catch (error) {
+      // KTL-46: a session that ended keeps the selected file for an upload after signing in.
+      if (session.handle(error)) return;
       setUploadError(notifyError(error, t('candidate.profile.documents.uploadFailure')));
     }
   };
@@ -189,6 +194,7 @@ export function CandidateDocuments({ candidate, readOnly = false, onDirtyChange 
 
   return (
     <section className="section-block candidate-documents" data-testid="candidate-documents">
+      <SessionExpiredNotice session={session} />
       {!documents.length ? (
         <p className="empty-state">{t('candidate.profile.documents.empty')}</p>
       ) : null}

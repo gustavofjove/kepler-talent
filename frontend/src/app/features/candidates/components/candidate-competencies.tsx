@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSessionRetry } from '../../../core/auth/use-session-retry';
 import { useServices } from '../../../core/di/services-context';
 import { errorText } from '../../../core/i18n/translatable-error';
 import { FormError } from '../../../shared/components/form-error';
@@ -38,6 +39,7 @@ interface Props {
 export function CandidateCompetencies({ candidate, control }: Props) {
   const { t } = useTranslation();
   const { candidateRelationsService, toastService } = useServices();
+  const session = useSessionRetry();
   const candidateService = useCandidates();
   const catalogs = useCatalogs();
   const catalogStatus = useCatalogStatus();
@@ -81,6 +83,7 @@ export function CandidateCompetencies({ candidate, control }: Props) {
     setSaving(true);
     const pending = { ...draft.value };
     const failures: Partial<Record<RelationKind, string>> = {};
+    let sessionEnded = false;
     for (const kind of changedFamilies(CATALOG_FAMILY_ORDER, saved, draft.value)) {
       // Each family maps its draft against the aggregate as it stands now, after the
       // families saved before it in this loop.
@@ -90,12 +93,18 @@ export function CandidateCompetencies({ candidate, control }: Props) {
         const absorbed = candidateService.find(candidate.id) ?? current;
         pending[kind] = RELATION_DEFINITIONS[kind].items(absorbed);
       } catch (err) {
+        // KTL-46: the rest would be refused too. Keep them all; signing in again retries
+        // the save, which writes only the families still changed.
+        if (session.handle(err, save)) {
+          sessionEnded = true;
+          break;
+        }
         failures[kind] = errorText(err, t);
       }
     }
     setSaving(false);
     setErrors(failures);
-    if (Object.keys(failures).length) {
+    if (sessionEnded || Object.keys(failures).length) {
       // Saved families now match the aggregate, so only the refused ones stay changed.
       draft.set(pending);
       return;
@@ -120,6 +129,7 @@ export function CandidateCompetencies({ candidate, control }: Props) {
       saving={saving}
       saveDisabled={Boolean(catalogStatus.message)}
       testId="candidate-competencies"
+      session={session}
     >
       <CatalogFamilyRows
         notice={

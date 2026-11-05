@@ -359,7 +359,7 @@ namespace Infrastructure.Persistence.Migrations
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
 
-                    b.Property<Guid>("SectorId")
+                    b.Property<Guid?>("SectorId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("SourceKey")
@@ -369,8 +369,9 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<DateOnly?>("StartDate")
                         .HasColumnType("date");
 
-                    b.Property<int?>("YearsExperience")
-                        .HasColumnType("integer");
+                    b.Property<decimal?>("YearsExperience")
+                        .HasPrecision(4, 1)
+                        .HasColumnType("numeric(4,1)");
 
                     b.HasKey("Id");
 
@@ -390,7 +391,7 @@ namespace Infrastructure.Persistence.Migrations
 
                             t.HasCheckConstraint("CK_CND_CandidateExperience_SectorFamily", "\"SectorFamily\" = 'sector'");
 
-                            t.HasCheckConstraint("CK_CND_CandidateExperience_YearsExperience", "\"YearsExperience\" IS NULL OR \"YearsExperience\" >= 0");
+                            t.HasCheckConstraint("CK_CND_CandidateExperience_YearsExperience", "\"YearsExperience\" IS NULL OR (\"YearsExperience\" >= 0 AND \"YearsExperience\" <= 100)");
                         });
                 });
 
@@ -1601,8 +1602,7 @@ namespace Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("SectorId", "SectorFamily")
                         .HasPrincipalKey("Id", "Family")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("KeplerTalento.Domain.Candidates.CandidateLanguage", b =>

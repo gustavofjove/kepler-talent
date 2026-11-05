@@ -162,8 +162,13 @@ public sealed class RowValidator
                         problem(required, ReasonCodes.RequiredFieldMissing);
                     }
                 }
-                if (!FieldParsers.TryInteger(row["YearsExperience"], out _))
+                if (!FieldParsers.TryInteger(row["YearsExperience"], out var experienceYears))
                 {
+                    problem("YearsExperience", ReasonCodes.IntegerInvalid);
+                }
+                else if (experienceYears is < 0 or > (int)ExperienceYears.Maximum)
+                {
+                    // KTL-46: the range the domain enforces, reported here rather than failing the load.
                     problem("YearsExperience", ReasonCodes.IntegerInvalid);
                 }
                 ValidateExperiencePeriod(row, problem);

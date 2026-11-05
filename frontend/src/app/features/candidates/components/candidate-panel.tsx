@@ -1,5 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { SessionExpiredNotice } from '../../../core/auth/session-expired-notice';
+import type { SessionRetry } from '../../../core/auth/use-session-retry';
 import {
   FIRST_CONTROL,
   panelTestIds,
@@ -21,6 +23,8 @@ interface Props {
   saving?: boolean;
   saveDisabled?: boolean;
   testId?: string;
+  /** The panel's side of a sign-in in place (KTL-46): shows the notice while its action waits. */
+  session?: SessionRetry;
   children: ReactNode;
 }
 
@@ -40,6 +44,7 @@ export function CandidatePanel({
   saving = false,
   saveDisabled = false,
   testId,
+  session,
   children,
 }: Props) {
   const { t } = useTranslation();
@@ -66,7 +71,11 @@ export function CandidatePanel({
   };
 
   return (
-    <article ref={panel} className="panel candidate-panel" data-testid={testId}>
+    <article
+      ref={panel}
+      className={control.editing ? 'panel candidate-panel is-editing' : 'panel candidate-panel'}
+      data-testid={testId}
+    >
       <div className="candidate-panel__header">
         <h2>{title}</h2>
         {control.canEdit && !control.editing ? (
@@ -81,48 +90,47 @@ export function CandidatePanel({
             {t('candidate.panel.edit')}
           </button>
         ) : null}
+        {/* An action panel writes as it goes, so it only closes: «Hecho» where «Editar» was. */}
+        {control.editing && mode === 'actions' ? (
+          <button
+            className="button"
+            type="button"
+            data-testid={ids.done}
+            aria-label={t('candidate.panel.doneAria', { section: title })}
+            onClick={control.onClose}
+          >
+            {t('candidate.panel.done')}
+          </button>
+        ) : null}
       </div>
       <div ref={body} className="candidate-panel__body">
+        {session ? <SessionExpiredNotice session={session} /> : null}
         {children}
       </div>
-      {control.editing ? (
+      {control.editing && mode === 'form' ? (
         <div className="form-actions candidate-panel__footer">
-          {mode === 'form' ? (
-            <>
-              <button
-                className="button secondary"
-                type="button"
-                data-testid={ids.cancel}
-                aria-label={t('candidate.panel.cancelAria', { section: title })}
-                disabled={saving}
-                onClick={cancel}
-              >
-                {t('candidate.panel.cancel')}
-              </button>
-              <button
-                className="button"
-                type={formId ? 'submit' : 'button'}
-                form={formId}
-                data-testid={ids.save}
-                aria-label={t('candidate.panel.saveAria', { section: title })}
-                aria-busy={saving}
-                disabled={saving || saveDisabled}
-                onClick={formId ? undefined : onSave}
-              >
-                {t('candidate.panel.save')}
-              </button>
-            </>
-          ) : (
-            <button
-              className="button"
-              type="button"
-              data-testid={ids.done}
-              aria-label={t('candidate.panel.doneAria', { section: title })}
-              onClick={control.onClose}
-            >
-              {t('candidate.panel.done')}
-            </button>
-          )}
+          <button
+            className="button secondary"
+            type="button"
+            data-testid={ids.cancel}
+            aria-label={t('candidate.panel.cancelAria', { section: title })}
+            disabled={saving}
+            onClick={cancel}
+          >
+            {t('candidate.panel.cancel')}
+          </button>
+          <button
+            className="button"
+            type={formId ? 'submit' : 'button'}
+            form={formId}
+            data-testid={ids.save}
+            aria-label={t('candidate.panel.saveAria', { section: title })}
+            aria-busy={saving}
+            disabled={saving || saveDisabled}
+            onClick={formId ? undefined : onSave}
+          >
+            {t('candidate.panel.save')}
+          </button>
         </div>
       ) : null}
     </article>

@@ -3,8 +3,8 @@ using KeplerTalento.Domain.Catalogs;
 namespace KeplerTalento.Domain.Candidates;
 
 /// <summary>
-/// A work experience record a candidate declares. The sector references a catalog entry
-/// in a fixed family; company, position and functions are free text.
+/// A work experience record a candidate declares. The sector, when given, references a catalog
+/// entry in a fixed family (optional since KTL-46); company, position and functions are free text.
 /// </summary>
 public sealed class CandidateExperience : CandidateRelation
 {
@@ -13,7 +13,7 @@ public sealed class CandidateExperience : CandidateRelation
     public CandidateExperience(
         Guid id,
         Guid candidateId,
-        Guid sectorId,
+        Guid? sectorId,
         string company,
         string position)
         : base(id, candidateId)
@@ -23,18 +23,19 @@ public sealed class CandidateExperience : CandidateRelation
         Position = position.Trim();
     }
 
-    public Guid SectorId { get; private set; }
+    public Guid? SectorId { get; private set; }
     public string SectorFamily { get; private set; } = CatalogFamilies.Sector;
     public string Company { get; private set; } = string.Empty;
     public string Position { get; private set; } = string.Empty;
     public string? Functions { get; private set; }
     public DateOnly? StartDate { get; private set; }
     public DateOnly? EndDate { get; private set; }
-    public int? YearsExperience { get; private set; }
+    /// <summary>Years with at most one decimal (KTL-46).</summary>
+    public decimal? YearsExperience { get; private set; }
     public bool IsCurrent { get; private set; }
 
     /// <summary>See <see cref="CandidateLanguage.SetValues"/>.</summary>
-    public void SetValues(Guid sectorId, string company, string position)
+    public void SetValues(Guid? sectorId, string company, string position)
     {
         SectorId = sectorId;
         Company = company.Trim();
@@ -59,9 +60,10 @@ public sealed class CandidateExperience : CandidateRelation
         IsCurrent = isCurrent;
     }
 
-    public void SetYearsExperience(int? yearsExperience)
+    public void SetYearsExperience(decimal? yearsExperience)
     {
-        if (yearsExperience is < 0)
+        if (yearsExperience is < 0 or > ExperienceYears.Maximum
+            || (yearsExperience is { } years && decimal.Round(years, 1) != years))
         {
             throw new ArgumentOutOfRangeException(nameof(yearsExperience));
         }

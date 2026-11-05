@@ -27,10 +27,13 @@ import './candidate-detail-page.css';
 /** «30 sept 2026, 11:49» in the active language and the viewer's time zone (KTL-34). */
 const AUDIT_DATE_TIME: Intl.DateTimeFormatOptions = { dateStyle: 'medium', timeStyle: 'short' };
 
+/** The candidate page's name in the unsaved-changes registry (KTL-46). */
+const UNSAVED_OWNER = 'candidate-page';
+
 export function CandidateDetailPage() {
   const { t } = useTranslation();
   const { id: candidateId = '' } = useParams<{ id: string }>();
-  const { confirmDialogService } = useServices();
+  const { confirmDialogService, unsavedChanges } = useServices();
   const timestampDetailsId = useId();
   const [showTimestampDetails, setShowTimestampDetails] = useState(false);
   const notifyError = useErrorToast();
@@ -133,9 +136,19 @@ export function CandidateDetailPage() {
   };
   const close = useCallback(() => setRequested(null), []);
 
+  // KTL-46: the auth layer keeps this page, rather than sending the user to sign-in, while it
+  // holds unsaved work.
+  useEffect(() => {
+    unsavedChanges.set(UNSAVED_OWNER, dirty);
+    return () => unsavedChanges.set(UNSAVED_OWNER, false);
+  }, [dirty, unsavedChanges]);
+
   // Leaving the page with unsaved changes asks first: in-app navigation through the router,
-  // reload and tab close through the browser's own prompt.
-  const blocker = useBlocker(dirty);
+  // reload and tab close through the browser's own prompt. Work another user's sign-in gave up
+  // (KTL-46) no longer holds the page.
+  const blocker = useBlocker(
+    useCallback(() => dirty && !unsavedChanges.wasDiscarded(), [dirty, unsavedChanges]),
+  );
   useEffect(() => {
     if (blocker.state !== 'blocked') return;
     void confirmDiscard(true).then((leave) => (leave ? blocker.proceed() : blocker.reset()));

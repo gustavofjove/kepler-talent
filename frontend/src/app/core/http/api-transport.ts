@@ -71,7 +71,12 @@ export class ApiTransport {
 
   private async send(path: string, options: ApiRequestOptions): Promise<Response> {
     const token = await this.tokenProvider();
-    if (!token) throw new AppError('UNAUTHENTICATED');
+    if (!token) {
+      // A session the browser already knows has ended is the same refusal as the API's 401, and
+      // takes the same path (KTL-46): sign-in, or the sign-in in place when work is unsaved.
+      await this.onUnauthorized();
+      throw new AppError('UNAUTHENTICATED');
+    }
     const controller = new AbortController();
     const callerSignal = options.signal;
     let callerCancelled = callerSignal?.aborted ?? false;

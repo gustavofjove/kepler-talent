@@ -138,62 +138,52 @@ test.describe('Candidate profile enrichment', () => {
         await page.request.get(`/api/candidates/${id}`, { headers: authorizationHeaders(page) })
       ).json()) as { education: { degree: string }[]; experience: { company: string }[] };
 
-    // Formación: staged, then saved with its own «Guardar».
+    // Formación: «Añadir formación» writes at once (KTL-46 follow-up); the X closes the panel.
+    // The entry form waits behind «Nueva formación».
     await editPanel(page, 'education');
     const education = page.getByTestId('candidate-education');
+    await expect(education.locator('form')).toHaveCount(0);
+    await page.getByTestId('education-new').click();
     await education.locator('select[name="educationType"]').selectOption('Grado');
     await education.locator('input[name="degree"]').fill(`Grado ${suffix}`);
     await education.locator('input[name="institution"]').fill('UCM');
     await education.locator('select[name="status"]').selectOption('Finalizada');
     await education.locator('form button[type="submit"]').click();
-    await expect(education).toContainText(`Grado ${suffix}`);
-    expect((await stored()).education).toEqual([]);
-    await savePanel(page, 'education');
-    expect((await stored()).education).toEqual([
-      expect.objectContaining({ degree: `Grado ${suffix}` }),
-    ]);
+    await expect(education.locator('.item-row')).toContainText(`Grado ${suffix}`);
+    await expect
+      .poll(async () => (await stored()).education.map((item) => item.degree))
+      .toEqual([`Grado ${suffix}`]);
+    await expect(page.getByTestId('candidate-panel-education-save')).toHaveCount(0);
+    await finishPanel(page, 'education');
 
-    // Experiencia: staged, then cancelled; nothing is written.
+    // Switching panels with an entry typed but not added asks first; declining keeps it.
     await editPanel(page, 'experience');
     const experience = page.getByTestId('candidate-experience');
+    await page.getByTestId('experience-new').click();
     await experience.locator('input[name="company"]').fill(`Acme ${suffix}`);
-    await experience.locator('input[name="position"]').fill('Analista');
-    await experience.locator('select[name="sector"]').selectOption('Servicios');
-    await experience.locator('form button[type="submit"]').click();
-    await expect(experience).toContainText(`Acme ${suffix}`);
-    await page.getByTestId('candidate-panel-experience-cancel').click();
-    await expect(experience).not.toContainText(`Acme ${suffix}`);
-    expect((await stored()).experience).toEqual([]);
-
-    // Switching panels with unsaved changes asks first; declining keeps the draft.
-    await editPanel(page, 'experience');
-    await experience.locator('input[name="company"]').fill(`Acme ${suffix}`);
-    await experience.locator('input[name="position"]').fill('Analista');
-    await experience.locator('select[name="sector"]').selectOption('Servicios');
-    await experience.locator('form button[type="submit"]').click();
     await page.getByTestId('candidate-panel-education-edit').click();
     await expect(page.getByTestId('confirm-dialog')).toBeVisible();
     await page.getByTestId('confirm-cancel').click();
-    await expect(page.getByTestId('candidate-panel-experience-save')).toBeVisible();
-    await expect(experience).toContainText(`Acme ${suffix}`);
+    await expect(page.getByTestId('candidate-panel-experience-done')).toBeVisible();
+    await expect(experience.locator('input[name="company"]')).toHaveValue(`Acme ${suffix}`);
 
-    // Leaving the page with unsaved changes asks too; declining stays with the draft.
+    // Leaving the page with unsaved changes asks too; declining stays with the form.
     await page.getByTestId('breadcrumb-candidates').click();
     await expect(page.getByTestId('confirm-dialog')).toBeVisible();
     await page.getByTestId('confirm-cancel').click();
     await expect(page).toHaveURL(new RegExp(`/app/candidates/${id}$`));
-    await expect(experience).toContainText(`Acme ${suffix}`);
+    await expect(experience.locator('input[name="company"]')).toHaveValue(`Acme ${suffix}`);
 
     // At 390px an open panel still fits without horizontal scroll.
     await page.setViewportSize({ width: 390, height: 844 });
     await expectNoHorizontalScroll(page);
     await page.setViewportSize({ width: 1280, height: 900 });
 
-    // Confirming the switch discards the draft and opens the other panel.
+    // Confirming the switch discards what was typed and opens the other panel.
     await page.getByTestId('candidate-panel-notes-edit').click();
     await page.getByTestId('confirm-accept').click();
     await expect(page.getByTestId('candidate-panel-notes-done')).toBeVisible();
-    await expect(experience).not.toContainText(`Acme ${suffix}`);
+    await expect(experience.locator('input[name="company"]')).toHaveCount(0);
     await finishPanel(page, 'notes');
     expect((await stored()).experience).toEqual([]);
 
@@ -356,13 +346,17 @@ test.describe('Candidate profile enrichment', () => {
     const suffix = Date.now().toString();
     await createCandidate(page, `Exp${suffix}`, 'Test');
     await editPanel(page, 'experience');
+    await page.getByTestId('experience-new').click();
 
     const experiencePanel = page.getByTestId('candidate-experience');
     await experiencePanel.locator('input[name="company"]').fill('Acme');
     await experiencePanel.locator('input[name="position"]').fill('Analista');
     await experiencePanel.locator('select[name="sector"]').selectOption('Servicios');
-    await experiencePanel.locator('input[name="startDate"]').fill('2024-06-01');
-    await experiencePanel.locator('input[name="endDate"]').fill('2024-01-01');
+    // KTL-46 follow-up: a month and a year each.
+    await experiencePanel.locator('select[name="startDateMonth"]').selectOption('6');
+    await experiencePanel.locator('select[name="startDateYear"]').selectOption('2024');
+    await experiencePanel.locator('select[name="endDateMonth"]').selectOption('1');
+    await experiencePanel.locator('select[name="endDateYear"]').selectOption('2024');
     await experiencePanel.locator('form button[type="submit"]').click();
 
     await expect(experiencePanel.locator('text=no puede ser anterior')).toBeVisible();
@@ -372,6 +366,7 @@ test.describe('Candidate profile enrichment', () => {
     const suffix = Date.now().toString();
     await createCandidate(page, `Edu${suffix}`, 'Test');
     await editPanel(page, 'education');
+    await page.getByTestId('education-new').click();
 
     const educationPanel = page.getByTestId('candidate-education');
     await educationPanel.locator('select[name="educationType"]').selectOption('Grado');

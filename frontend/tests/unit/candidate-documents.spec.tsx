@@ -236,8 +236,10 @@ describe('CandidateDocuments', () => {
       file,
       isPrimary: true,
     });
-    expect(screen.getByTestId('document-drop-zone')).toBeInTheDocument();
-    expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+    // The drop area and the clean report follow the upload's own render and effect; under a
+    // loaded parallel run they can land a tick after the badge, so wait for them.
+    expect(await screen.findByTestId('document-drop-zone')).toBeInTheDocument();
+    await waitFor(() => expect(onDirtyChange).toHaveBeenLastCalledWith(false));
   });
 
   it('shows exhausted observation and refresh inside the pending row only', async () => {

@@ -186,6 +186,19 @@ public sealed class RowValidatorTests : IDisposable
         Assert.Equal(ReasonCodes.PeriodInconsistent, problem.ReasonCode);
     }
 
+    [Theory]
+    [InlineData("-1")]
+    [InlineData("101")]
+    public void Experience_years_outside_the_domain_range_are_rejected(string years)
+    {
+        Write(ExportContract.Candidates, CleanCandidate);
+        Write(ExportContract.Experience, $"X-1,C-001,Empresa,Puesto,Servicios,,,,{years},false,");
+
+        var problem = Assert.Single(Validate());
+        Assert.Equal(ReasonCodes.IntegerInvalid, problem.ReasonCode);
+        Assert.Equal("YearsExperience", problem.Field);
+    }
+
     [Fact]
     public void Education_requires_a_degree_and_an_institution()
     {

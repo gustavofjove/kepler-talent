@@ -81,8 +81,10 @@ internal static class CandidateProjection
                 record.Id,
                 record.Company,
                 record.Position,
-                await lookup.NameAsync(CatalogFamilies.Sector, record.SectorId, cancellationToken),
-                record.Functions,
+                record.SectorId is { } sectorId
+                    ? await lookup.NameAsync(CatalogFamilies.Sector, sectorId, cancellationToken)
+                    : null,
+                RichTextLegacy.ToSafeHtml(record.Functions),
                 record.StartDate?.ToString("yyyy-MM-dd"),
                 record.EndDate?.ToString("yyyy-MM-dd"),
                 record.YearsExperience,

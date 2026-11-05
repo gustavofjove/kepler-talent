@@ -1,5 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { SessionExpiredNotice } from '../../../core/auth/session-expired-notice';
+import { useSessionRetry } from '../../../core/auth/use-session-retry';
 import { usePermission, useServices } from '../../../core/di/services-context';
 import { formatDate } from '../../../core/i18n/format';
 import { errorText } from '../../../core/i18n/translatable-error';
@@ -30,6 +32,7 @@ export function CandidateNotes({
   const canEdit = !readOnly && canUpdate;
   const notesService = useCandidateNotes();
   const notifyError = useErrorToast();
+  const session = useSessionRetry();
   const notes = notesService.list(candidateId);
   const [body, setBody] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
@@ -39,7 +42,7 @@ export function CandidateNotes({
 
   useEffect(() => onDirtyChange?.(dirty), [dirty, onDirtyChange]);
 
-  // Leaving edit mode drops unsaved input, as «Hecho» and a confirmed discard both mean.
+  // Leaving edit mode drops unsaved input, as closing the panel and a confirmed discard both mean.
   useEffect(() => {
     if (canEdit) return;
     setBody('');
@@ -53,6 +56,12 @@ export function CandidateNotes({
   );
 
   const report = (cause: unknown): void => {
+    // KTL-46: a session that ended keeps the typed note; the user repeats the action after
+    // signing in again.
+    if (session.handle(cause)) {
+      setError('');
+      return;
+    }
     const message = errorText(cause, t);
     setError(message);
     notifyError(cause, message);
@@ -98,6 +107,7 @@ export function CandidateNotes({
 
   return (
     <section className="section-block candidate-notes" data-testid="candidate-notes">
+      <SessionExpiredNotice session={session} />
       <FormError message={error} />
       {!notes.length ? <p className="empty-state">{t('candidate.profile.notes.empty')}</p> : null}
       <div className="item-list">

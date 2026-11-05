@@ -23,10 +23,12 @@ public sealed class CandidateExperienceConfiguration : IEntityTypeConfiguration<
                 $"CK_{Table}_Period",
                 "(\"StartDate\" IS NULL OR \"EndDate\" IS NULL OR \"EndDate\" >= \"StartDate\") "
                     + "AND (NOT \"IsCurrent\" OR \"EndDate\" IS NULL)");
+            // KTL-46: one decimal, up to the ExperienceYears.Maximum the domain enforces.
             table.HasCheckConstraint(
                 $"CK_{Table}_YearsExperience",
-                "\"YearsExperience\" IS NULL OR \"YearsExperience\" >= 0");
+                "\"YearsExperience\" IS NULL OR (\"YearsExperience\" >= 0 AND \"YearsExperience\" <= 100)");
         });
+        builder.Property(experience => experience.YearsExperience).HasPrecision(4, 1);
         builder.ConfigureRelation(Table, candidate => candidate.Experience);
         builder.Property(experience => experience.Company).IsEncrypted(Table, CandidateTextLimits.Company, requireText: true).IsRequired();
         builder.Property(experience => experience.Position).IsEncrypted(Table, CandidateTextLimits.Position, requireText: true).IsRequired();

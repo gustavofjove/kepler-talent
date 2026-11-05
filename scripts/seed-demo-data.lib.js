@@ -1150,11 +1150,14 @@ const BACKGROUND = {
   },
 };
 
-/** Whole years between two `yyyy-MM-dd` dates; the current job runs to `today`. */
+/**
+ * Years between two `yyyy-MM-dd` dates, the current job running to `today`: the months from the
+ * start month to the end month, both included, / 12 to one decimal. It is the formula the API
+ * applies anyway (KTL-46), so a seeded value reads back as sent.
+ */
 function yearsBetween(start, end) {
-  const [fromYear, fromMonth] = start.split('-').map(Number);
-  const [toYear, toMonth] = end.split('-').map(Number);
-  return Math.floor((toYear * 12 + toMonth - (fromYear * 12 + fromMonth)) / 12);
+  const month = (value) => Number(value.slice(0, 4)) * 12 + Number(value.slice(5, 7));
+  return Math.round(((month(end) - month(start) + 1) / 12) * 10) / 10;
 }
 
 /** The two PUT bodies' collections for one background; new rows, so every `id` is null. */

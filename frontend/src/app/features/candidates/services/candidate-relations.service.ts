@@ -1,3 +1,4 @@
+import { formatNumber } from '../../../core/i18n/format';
 import { TranslatableError } from '../../../core/i18n/translatable-error';
 import {
   CandidateEducation,
@@ -85,17 +86,73 @@ export function validateEducationEntry(entry: CandidateEducation): void {
   }
 }
 
+/** `CandidateTextLimits.Functions` in the API, which counts the sanitised HTML (KTL-46). */
+export const MAX_FUNCTIONS_LENGTH = 20_000;
+
+/**
+ * The length the API's sanitiser leaves of editor HTML: no editor spans, no attributes, and
+ * `b`/`i` written as `strong`/`em`. Close enough to refuse in the panel what the API would refuse,
+ * without refusing what it would accept.
+ */
+export function sanitisedLength(html: string): number {
+  return html
+    .replace(/<\/?span\b[^>]*>/gi, '')
+    .replace(/<(\/?)([a-z][a-z0-9]*)\b[^>]*>/gi, '<$1$2>')
+    .replace(/<(\/?)b>/gi, '<$1strong>')
+    .replace(/<(\/?)i>/gi, '<$1em>').length;
+}
+
+/**
+ * True for a `YYYY-MM…` date in a month after the current one (KTL-46 follow-up): an experience
+ * cannot start or end in the future, as the API's `candidate.experience.date.future` rule says.
+ */
+function afterThisMonth(date: string | undefined, now: Date = new Date()): boolean {
+  const match = /^(\d{4})-(\d{2})/.exec(date ?? '');
+  if (!match) return false;
+  return Number(match[1]) * 12 + Number(match[2]) > now.getFullYear() * 12 + now.getMonth() + 1;
+}
+
 export function validateExperienceEntry(entry: CandidateExperience): void {
   requireText(entry.company, 'candidate.profile.experience.companyRequired');
   requireText(entry.position, 'candidate.profile.experience.positionRequired');
-  requireText(entry.sector, 'candidate.profile.experience.sectorRequired');
   refuseNegativeYears(entry.yearsExperience);
   if (entry.startDate && entry.endDate && entry.endDate < entry.startDate) {
     throw new TranslatableError('candidate.profile.experience.invalidRange');
   }
+  if (afterThisMonth(entry.startDate) || afterThisMonth(entry.endDate)) {
+    throw new TranslatableError('candidate.profile.experience.futureDate');
+  }
+  if (entry.functions && sanitisedLength(entry.functions) > MAX_FUNCTIONS_LENGTH) {
+    throw new TranslatableError('candidate.profile.experience.functionsTooLong', {
+      max: formatNumber(MAX_FUNCTIONS_LENGTH),
+    });
+  }
 }
 
-/** A current position has no end date; the draft may still hold one from before the tick. */
+/**
+ * Validates one entry of the whole list a write sends. An entry stored before dates in the future
+ * were refused (KTL-46 follow-up) blocks every write of its list until it is corrected, so its
+ * message names it: the generic one would read as if the entry in the form were still wrong.
+ */
+function validateExperienceListEntry(entry: CandidateExperience): void {
+  try {
+    validateExperienceEntry(entry);
+  } catch (err) {
+    if (err instanceof TranslatableError && err.key === 'candidate.profile.experience.futureDate') {
+      throw new TranslatableError('candidate.profile.experience.futureDateStored', {
+        position: entry.position,
+        company: entry.company,
+      });
+    }
+    throw err;
+  }
+}
+
+/**
+ * A current position has no end date; the draft may still hold one from before the tick. Years
+ * the dates determine are left as they are: the API works them out on every write (KTL-46 D4),
+ * and recomputing them here would mark an untouched current role as changed every day.
+ */
 export function normalizeExperience(entry: CandidateExperience): CandidateExperience {
   return { ...entry, endDate: entry.isCurrent ? undefined : entry.endDate };
 }
@@ -146,7 +203,7 @@ export class CandidateRelationsService {
   }
 
   async saveExperience(candidateId: string, entries: CandidateExperience[]): Promise<void> {
-    entries.forEach(validateExperienceEntry);
+    entries.forEach(validateExperienceListEntry);
     await this.require(candidateId);
     await this.candidateService.setExperience(candidateId, entries.map(normalizeExperience));
   }

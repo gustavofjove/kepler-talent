@@ -465,13 +465,20 @@ describe('CandidateDetailPage', () => {
 
       await userEvent.click(editButton('education')!);
 
+      // KTL-46 follow-up: the entry form waits behind «Nueva formación», which takes focus.
       const education = screen.getByTestId('candidate-education');
-      expect(within(education).getByLabelText('Tipo')).toHaveFocus();
-      expect(screen.getByTestId('candidate-panel-education-save')).toBeInTheDocument();
-      expect(screen.getByTestId('candidate-panel-education-cancel')).toBeInTheDocument();
-      // Every other panel stays read-only.
-      expect(document.querySelectorAll('form')).toHaveLength(1);
+      expect(within(education).getByTestId('education-new')).toHaveFocus();
+      expect(within(education).queryByLabelText('Tipo')).toBeNull();
+      // Each entry is written at once, so the panel only closes.
+      expect(screen.getByTestId('candidate-panel-education-done')).toBeInTheDocument();
+      expect(screen.queryByTestId('candidate-panel-education-save')).toBeNull();
+      expect(screen.queryByTestId('candidate-panel-education-cancel')).toBeNull();
+      // No form anywhere until one is asked for.
+      expect(document.querySelectorAll('form')).toHaveLength(0);
       expect(editButton('education')).toBeNull();
+
+      await userEvent.click(within(education).getByTestId('education-new'));
+      expect(within(education).getByLabelText('Tipo')).toHaveFocus();
     });
 
     it('titles the add forms and sets them apart after the entries (KTL-34)', async () => {
@@ -484,38 +491,49 @@ describe('CandidateDetailPage', () => {
       ] as const) {
         await userEvent.click(editButton(panel)!);
         const section = screen.getByTestId(`candidate-${panel}`);
-        const form = within(section).getByRole('form', { name: title });
-        expect(form).toHaveClass('candidate-add-form');
+        // After the entries, not before them: the area under the rule.
+        const area = screen.getByTestId(`${panel}-add-area`);
+        expect(area).toHaveClass('candidate-add-form');
+        expect(section.lastElementChild).toBe(area);
+        // KTL-46 follow-up: «Hecho» closes the panel from its header, as in every action panel.
+        const done = screen.getByTestId(`candidate-panel-${panel}-done`);
+        expect(done.closest('.candidate-panel__header')).not.toBeNull();
+        expect(area).not.toContainElement(done);
+        await userEvent.click(within(area).getByRole('button', { name: title }));
+        const form = within(area).getByRole('form', { name: title });
         expect(within(form).getByRole('heading', { level: 3, name: title })).toBeInTheDocument();
-        // After the entries, not before them.
-        expect(section.lastElementChild).toBe(form);
-        await userEvent.click(screen.getByTestId(`candidate-panel-${panel}-cancel`));
+        await userEvent.click(done);
       }
     });
 
-    it('stages education and writes it once on «Guardar»', async () => {
+    it('writes an added entry at once and stays open until closed', async () => {
       const setEducation = vi.spyOn(bed.api, 'setEducation');
       await renderAt('/app/candidates/c1');
       await loaded();
       await userEvent.click(editButton('education')!);
 
       const education = within(screen.getByTestId('candidate-education'));
+      await userEvent.click(education.getByTestId('education-new'));
       await userEvent.selectOptions(education.getByLabelText('Tipo'), 'Grado');
       await userEvent.type(education.getByLabelText('Titulación'), 'Grado en ADE');
       await userEvent.type(education.getByLabelText('Centro'), 'UCM');
       await userEvent.selectOptions(education.getByLabelText('Estado'), 'Finalizada');
       await userEvent.click(education.getByRole('button', { name: 'Añadir formación' }));
-      expect(education.getByText('Grado en ADE')).toBeInTheDocument();
-      expect(setEducation).not.toHaveBeenCalled();
-
-      await userEvent.click(screen.getByTestId('candidate-panel-education-save'));
 
       await waitFor(() => expect(setEducation).toHaveBeenCalledTimes(1));
       expect(bed.api.candidates.get('c1')?.education).toEqual([
         expect.objectContaining({ degree: 'Grado en ADE' }),
       ]);
       expect(toastService.show).toHaveBeenCalledWith('Formación guardada.', 'success');
+      expect(await education.findByText('Grado en ADE')).toBeInTheDocument();
+      // Back to «Nueva formación» for the next entry.
+      expect(education.queryByLabelText('Titulación')).toBeNull();
+      expect(education.getByTestId('education-new')).toHaveFocus();
+
+      await userEvent.click(screen.getByTestId('candidate-panel-education-done'));
+
       await waitFor(() => expect(editButton('education')).toHaveFocus());
+      expect(setEducation).toHaveBeenCalledTimes(1);
       expect(screen.getByTestId('candidate-education')).toHaveTextContent('Grado en ADE');
     });
 
@@ -525,13 +543,14 @@ describe('CandidateDetailPage', () => {
       await userEvent.click(editButton('education')!);
 
       const education = within(screen.getByTestId('candidate-education'));
+      await userEvent.click(education.getByTestId('education-new'));
       await userEvent.click(education.getByRole('button', { name: 'Añadir formación' }));
 
       expect(education.getByText('El tipo de formación es obligatorio.')).toBeInTheDocument();
       expect(education.getByText('Sin formación registrada.')).toBeInTheDocument();
     });
 
-    it('discards the draft on «Cancelar» without writing', async () => {
+    it('removes an entry at once after confirming, and keeps it when declined', async () => {
       bed.api.seed({
         id: 'c2',
         firstName: 'Eva',
@@ -552,13 +571,19 @@ describe('CandidateDetailPage', () => {
       await userEvent.click(editButton('experience')!);
 
       const experience = within(screen.getByTestId('candidate-experience'));
+      confirm.mockResolvedValueOnce(false);
       await userEvent.click(experience.getByRole('button', { name: 'Quitar' }));
-      expect(experience.queryByText('Analista')).toBeNull();
-      await userEvent.click(screen.getByTestId('candidate-panel-experience-cancel'));
-
+      expect(confirm).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Quitar experiencia', danger: true }),
+      );
       expect(setExperience).not.toHaveBeenCalled();
-      expect(screen.getByTestId('candidate-experience')).toHaveTextContent('Analista');
-      expect(editButton('experience')).toHaveFocus();
+      expect(experience.getByText('Analista')).toBeInTheDocument();
+
+      await userEvent.click(experience.getByRole('button', { name: 'Quitar' }));
+
+      await waitFor(() => expect(setExperience).toHaveBeenCalledTimes(1));
+      expect(bed.api.candidates.get('c2')?.experience).toEqual([]);
+      await waitFor(() => expect(experience.queryByText('Analista')).toBeNull());
     });
 
     it('saves the core record, updates the header and announces it', async () => {
@@ -785,15 +810,16 @@ describe('CandidateDetailPage', () => {
   describe('one panel at a time and unsaved changes (KTL-29)', () => {
     beforeEach(asEditor);
 
+    // KTL-46 follow-up: entries are written at once, so what is unsaved is the form as typed.
     const dirtyEducation = async () => {
       await userEvent.click(editButton('education')!);
       const education = within(screen.getByTestId('candidate-education'));
+      await userEvent.click(education.getByTestId('education-new'));
       await userEvent.selectOptions(education.getByLabelText('Tipo'), 'Grado');
       await userEvent.type(education.getByLabelText('Titulación'), 'Grado en ADE');
-      await userEvent.type(education.getByLabelText('Centro'), 'UCM');
-      await userEvent.selectOptions(education.getByLabelText('Estado'), 'Finalizada');
-      await userEvent.click(education.getByRole('button', { name: 'Añadir formación' }));
     };
+    const typedDegree = () =>
+      within(screen.getByTestId('candidate-education')).queryByLabelText('Titulación');
 
     it('keeps focus in the panel being opened, not the one closing (review)', async () => {
       await renderAt('/app/candidates/c1');
@@ -804,7 +830,7 @@ describe('CandidateDetailPage', () => {
       await userEvent.click(editButton('education')!);
 
       expect(
-        within(screen.getByTestId('candidate-education')).getByLabelText('Tipo'),
+        within(screen.getByTestId('candidate-education')).getByTestId('education-new'),
       ).toHaveFocus();
     });
 
@@ -836,7 +862,7 @@ describe('CandidateDetailPage', () => {
 
       expect(confirm).not.toHaveBeenCalled();
       expect(editButton('education')).toBeInTheDocument();
-      expect(screen.getByTestId('candidate-panel-experience-save')).toBeInTheDocument();
+      expect(screen.getByTestId('candidate-panel-experience-done')).toBeInTheDocument();
     });
 
     it('asks before discarding unsaved changes, and keeps them when declined', async () => {
@@ -848,8 +874,8 @@ describe('CandidateDetailPage', () => {
       await userEvent.click(editButton('experience')!);
 
       expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ title: 'Descartar cambios' }));
-      expect(screen.getByTestId('candidate-panel-education-save')).toBeInTheDocument();
-      expect(screen.getByTestId('candidate-education')).toHaveTextContent('Grado en ADE');
+      expect(screen.getByTestId('candidate-panel-education-done')).toBeInTheDocument();
+      expect(typedDegree()).toHaveValue('Grado en ADE');
     });
 
     it('discards unsaved changes when confirmed and opens the other panel', async () => {
@@ -860,8 +886,9 @@ describe('CandidateDetailPage', () => {
       await userEvent.click(editButton('experience')!);
 
       await waitFor(() =>
-        expect(screen.getByTestId('candidate-panel-experience-save')).toBeInTheDocument(),
+        expect(screen.getByTestId('candidate-panel-experience-done')).toBeInTheDocument(),
       );
+      expect(typedDegree()).toBeNull();
       expect(screen.getByTestId('candidate-education')).not.toHaveTextContent('Grado en ADE');
     });
 
@@ -875,7 +902,7 @@ describe('CandidateDetailPage', () => {
 
       expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ title: 'Salir sin guardar' }));
       expect(router.state.location.pathname).toBe('/app/candidates/c1');
-      expect(screen.getByTestId('candidate-education')).toHaveTextContent('Grado en ADE');
+      expect(typedDegree()).toHaveValue('Grado en ADE');
     });
 
     it('leaves when confirmed', async () => {
@@ -925,15 +952,26 @@ describe('CandidateDetailPage', () => {
       expect(screen.getByTestId('candidate-panel-notes-done')).toBeInTheDocument();
     });
 
-    it('closes an action panel with «Hecho»', async () => {
+    it('closes an action panel with «Hecho» in its header, and tints the panel being edited', async () => {
       await renderAt('/app/candidates/c1');
       await loaded();
+      const panel = screen.getByTestId('candidate-documents').closest('.candidate-panel')!;
+      expect(panel).not.toHaveClass('is-editing');
       await userEvent.click(editButton('documents')!);
       expect(screen.getByTestId('document-file')).toBeInTheDocument();
+      expect(panel).toHaveClass('is-editing');
 
-      await userEvent.click(screen.getByTestId('candidate-panel-documents-done'));
+      // KTL-46 follow-up: «Hecho» where «Editar» was, named for the panel, and no footer.
+      const done = screen.getByRole('button', { name: 'Terminar la edición de Documentos' });
+      expect(done).toBe(screen.getByTestId('candidate-panel-documents-done'));
+      expect(done).toHaveTextContent('Hecho');
+      expect(done.closest('.candidate-panel__header')).not.toBeNull();
+      expect(document.querySelector('.candidate-panel__footer')).toBeNull();
+
+      await userEvent.click(done);
 
       expect(screen.queryByTestId('document-file')).toBeNull();
+      expect(panel).not.toHaveClass('is-editing');
       expect(editButton('documents')).toHaveFocus();
     });
   });

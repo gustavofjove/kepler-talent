@@ -15,10 +15,16 @@
   margin: 0;
 }
 
+/* KTL-46 follow-up: the panel being edited stands out with a light tint, lighter than the row
+ * being edited inside it. Inputs keep their own white background. */
+.candidate-panel.is-editing {
+  background: color-mix(in srgb, var(--fj-orange-pale) 45%, var(--bg-1));
+  border-color: color-mix(in srgb, var(--fj-orange-pale) 70%, var(--border-2));
+}
+
 .candidate-panel__body {
   min-width: 0;
 }
-
 /* The «Nueva …» form under a panel's entries (KTL-34): a light rule and a title set it apart
  * from the list above, so it reads as adding an entry rather than editing the last one. */
 .candidate-add-form {
@@ -27,6 +33,15 @@
 }
 
 .candidate-add-form > h3 {
+  margin: 0;
+}
+
+/* The entry form inside that area, shown on «Nueva …» or «Editar» (KTL-46 follow-up). */
+.candidate-entry-form {
+  margin: 0;
+}
+
+.candidate-entry-form > h3 {
   margin: 0;
 }
 
@@ -41,4 +56,104 @@
   background: var(--fj-orange-pale);
   box-shadow: inset 3px 0 0 var(--primary);
   padding-left: 12px;
+}
+
+/* KTL-46: an Experiencia entry with a description, read-only. The summary is the button that
+ * shows or hides the description under it. */
+.item-row--disclosure {
+  align-items: stretch;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-toggle {
+  align-items: center;
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  gap: 10px;
+  justify-content: flex-start;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.item-toggle:focus-visible {
+  border-radius: var(--r-md);
+  outline: 2px solid rgba(22, 33, 54, 0.25);
+  outline-offset: 2px;
+}
+
+/* Leads the summary: a right arrow while collapsed, turning down when expanded (KTL-46). */
+.item-toggle__chevron {
+  border-bottom: 2px solid var(--fg-2);
+  border-right: 2px solid var(--fg-2);
+  flex: none;
+  height: 7px;
+  margin-left: 2px;
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+  width: 7px;
+}
+
+.item-toggle[aria-expanded='true'] .item-toggle__chevron {
+  transform: rotate(45deg);
+}
+
+/* Takes the arrow's place in a row that cannot expand, so the years columns line up. */
+.item-toggle__spacer {
+  flex: none;
+  width: 11px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item-toggle__chevron {
+    transition: none;
+  }
+}
+
+.item-row--disclosure .rich-text-view {
+  border-left: 3px solid var(--border-2);
+  padding-left: 12px;
+}
+
+/* An experience date as a month and a year (KTL-46 follow-up). The legend reads like a field label. */
+.month-year-field {
+  border: 0;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.month-year-field legend {
+  color: var(--fg-2);
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  padding: 0;
+}
+
+.month-year-field__controls {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+}
+
+/* «Puesto actual» sits under Fecha fin, the date it disables. */
+.experience-current {
+  margin-top: 2px;
+}
+
+/* A caption for a control that is not a native input (the description editor). */
+.field-label {
+  color: var(--fg-2);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.field-hint {
+  font-size: 12px;
 }

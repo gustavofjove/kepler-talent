@@ -19,18 +19,15 @@ describe('ApiTransport', () => {
     expect(new Headers(init.headers).get('Authorization')).toBe('Bearer signed-token');
   });
 
-  it('sends no request when the session has no token', async () => {
+  it('sends no request when the session has no token, and reports it as a 401 would', async () => {
     const fetcher = vi.fn();
+    const onUnauthorized = vi.fn();
     await expect(
-      new ApiTransport(
-        '/api',
-        async () => null,
-        () => undefined,
-        1_000,
-        fetcher,
-      ).request('/me'),
+      new ApiTransport('/api', async () => null, onUnauthorized, 1_000, fetcher).request('/me'),
     ).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
     expect(fetcher).not.toHaveBeenCalled();
+    // KTL-46: an expired session the browser already knows of takes the same path as the API's 401.
+    expect(onUnauthorized).toHaveBeenCalledOnce();
   });
 
   it('notifies the session on a 401', async () => {

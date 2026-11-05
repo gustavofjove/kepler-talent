@@ -1,0 +1,91 @@
+/* The shared rich-text editor (KTL-15 position descriptions, KTL-46 experience functions). */
+.rich-text-editor {
+  background: var(--bg-1);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  position: relative;
+}
+
+.rich-text-toolbar {
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+}
+
+.rich-text-toolbar button {
+  align-items: center;
+  background: var(--bg-1);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-md);
+  color: var(--fg-2);
+  cursor: pointer;
+  display: inline-flex;
+  gap: 6px;
+  min-height: 30px;
+  padding: 5px 10px;
+}
+
+.rich-text-toolbar svg {
+  flex: none;
+}
+
+.rich-text-toolbar button:hover {
+  border-color: var(--fj-navy);
+  color: var(--fj-navy);
+}
+
+.rich-text-toolbar button:focus-visible {
+  outline: 2px solid rgba(22, 33, 54, 0.15);
+  outline-offset: 1px;
+}
+
+.rich-text-input {
+  min-height: 12rem;
+  outline: none;
+  padding: 1rem;
+}
+
+.rich-text-input:focus {
+  box-shadow: inset 0 0 0 2px rgba(22, 33, 54, 0.15);
+}
+
+.rich-text-body {
+  position: relative;
+}
+
+/* Grows downwards like a textarea; never sideways, so it cannot widen the panel. */
+.rich-text-body.is-resizable {
+  height: 9rem;
+  max-height: 40rem;
+  min-height: 6rem;
+  overflow: auto;
+  resize: vertical;
+}
+
+.rich-text-body.is-resizable .rich-text-input {
+  min-height: 100%;
+}
+
+.rich-text-placeholder {
+  color: var(--muted);
+  left: 1rem;
+  pointer-events: none;
+  position: absolute;
+  top: 1rem;
+}
+
+.rich-text-view {
+  overflow-wrap: anywhere;
+}
+
+.rich-text-view > :first-child {
+  margin-top: 0;
+}
+
+.rich-text-view > :last-child {
+  margin-bottom: 0;
+}

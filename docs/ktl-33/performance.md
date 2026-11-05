@@ -8,14 +8,14 @@ Budget: p95 ≤ 300 ms at the ceiling.
 
 | Case | Median (ms) | p95 (ms) | Max (ms) |
 | ---- | ----------: | -------: | -------: |
-| Text matching one candidate | 170.3 | 194.7 | 205.5 |
-| Text matching most candidates | 184.1 | 212.7 | 217.0 |
-| Text found only in notes | 187.2 | 238.4 | 265.0 |
-| Text matching nothing | 189.8 | 232.4 | 258.2 |
-| Last-name order, first page | 75.8 | 85.1 | 107.9 |
-| Last-name order, deep page 120 | 73.8 | 105.2 | 118.3 |
-| Text matching most candidates, availability-date order | 196.5 | 239.5 | 261.1 |
-| Text and availability, last-name order | 69.5 | 91.6 | 99.6 |
+| Text matching one candidate | 188.8 | 259.0 | 353.9 |
+| Text matching most candidates | 215.3 | 272.4 | 272.9 |
+| Text found only in notes | 235.3 | 335.3 | 488.0 |
+| Text matching nothing | 287.8 | 457.9 | 526.4 |
+| Last-name order, first page | 122.2 | 182.3 | 217.3 |
+| Last-name order, deep page 120 | 124.2 | 141.4 | 145.3 |
+| Text matching most candidates, availability-date order | 258.9 | 446.6 | 454.5 |
+| Text and availability, last-name order | 97.1 | 113.4 | 208.7 |
 
 Searches with neither free text nor the last-name order are unchanged by KTL-33 and
 keep their SQL plan evidence in [`docs/ktl-10/query-plans.md`](../ktl-10/query-plans.md).
