@@ -504,6 +504,12 @@ tbody tr:hover {
   min-width: 9ch;
 }
 
+/* An experience's «2020 (ene) – 2020 (dic)» varies in length and reserves no column: a row without
+   dates starts at the left (KTL-46 follow-up). */
+.item-period--months {
+  min-width: 0;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

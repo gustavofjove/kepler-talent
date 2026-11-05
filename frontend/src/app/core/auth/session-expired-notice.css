@@ -1,0 +1,8 @@
+/* KTL-46: the session ended while the page held unsaved work, which is kept. */
+.session-expired {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  justify-content: space-between;
+}

@@ -129,11 +129,11 @@ public sealed record CandidateExperienceResponse(
     Guid Id,
     string Company,
     string Position,
-    string Sector,
+    string? Sector,
     string? Functions,
     string? StartDate,
     string? EndDate,
-    int? YearsExperience,
+    decimal? YearsExperience,
     bool IsCurrent,
     string? Notes);
 
@@ -270,6 +270,8 @@ public static class CandidateErrors
     public const string DocumentPrimaryAmbiguous = "candidate.document.primary_ambiguous";
     public const string ConstraintViolation = "candidate.constraint.violation";
     public const string FieldTooLong = "candidate.field.too_long";
+    public const string ExperienceYearsInvalid = "candidate.experience.years.invalid";
+    public const string ExperienceDateFuture = "candidate.experience.date.future";
 
     public const string NotFoundMessage = "Candidato no encontrado.";
     public const string FirstNameRequiredMessage = "El nombre es obligatorio.";
@@ -291,6 +293,10 @@ public static class CandidateErrors
         "Solo puede haber un documento principal por candidato.";
     public const string ConstraintViolationMessage = "La solicitud contiene datos no válidos.";
     public const string FieldTooLongMessage = "El valor supera la longitud máxima permitida.";
+    public const string ExperienceYearsInvalidMessage =
+        "Los años de experiencia deben estar entre 0 y 100, con un decimal como máximo.";
+    public const string ExperienceDateFutureMessage =
+        "Las fechas de una experiencia no pueden ser posteriores al mes actual.";
     public const string NoteConcurrencyConflictMessage =
         "La nota ha cambiado desde que se cargó. Vuelva a cargarla e inténtelo de nuevo.";
 }

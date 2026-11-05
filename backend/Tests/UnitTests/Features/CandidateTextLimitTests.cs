@@ -90,6 +90,36 @@ public sealed class CandidateTextLimitTests
         Assert.Equal(255, CandidateTextLimits.DocumentFileName);
     }
 
+    [Fact]
+    public void Experience_functions_take_the_position_description_limit()
+    {
+        Assert.Equal(20_000, CandidateTextLimits.Functions);
+    }
+
+    [Theory]
+    [InlineData(null, true)]
+    [InlineData(0.0, true)]
+    [InlineData(3.5, true)]
+    [InlineData(100.0, true)]
+    [InlineData(-0.1, false)]
+    [InlineData(100.1, false)]
+    [InlineData(2.25, false)]
+    public async Task Experience_years_hold_one_decimal_from_0_to_100(double? years, bool valid)
+    {
+        var result = await new SetCandidateExperienceValidator().ValidateAsync(new SetCandidateExperienceCommand(
+            Guid.NewGuid(),
+            [new CandidateExperienceInput(null, "Empresa", "Puesto", "TIC", null, null, null, (decimal?)years, false, null)],
+            1));
+
+        Assert.Equal(valid, result.IsValid);
+        if (!valid)
+        {
+            var error = Assert.Single(result.Errors);
+            Assert.Equal(CandidateErrors.ExperienceYearsInvalid, error.ErrorCode);
+            Assert.DoesNotContain(years!.Value.ToString(System.Globalization.CultureInfo.InvariantCulture), error.ErrorMessage, StringComparison.Ordinal);
+        }
+    }
+
     private static CreateCandidateCommand Create(string field, string value) => new(
         field == nameof(CreateCandidateCommand.FirstName) ? value : "Ana",
         field == nameof(CreateCandidateCommand.LastName) ? value : "López",

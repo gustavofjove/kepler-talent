@@ -175,10 +175,13 @@ export interface CandidateExperience {
   id: string;
   company: string;
   position: string;
-  sector: string;
+  /** Optional since the KTL-46 follow-up; the API answers `null` when none was chosen. */
+  sector?: string | null;
+  /** «Descripción» (KTL-46): rich text the API has sanitised; legacy plain text arrives as paragraphs. */
   functions?: string;
   startDate?: string;
   endDate?: string;
+  /** One decimal at most. The API works it out from the dates whenever they determine it. */
   yearsExperience?: number;
   isCurrent: boolean;
   notes?: string;

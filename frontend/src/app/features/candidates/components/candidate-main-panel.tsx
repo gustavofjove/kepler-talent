@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSessionRetry } from '../../../core/auth/use-session-retry';
 import { useServices } from '../../../core/di/services-context';
 import { formatDay } from '../../../core/i18n/format';
 import { useErrorToast } from '../../../core/services/use-error-toast';
@@ -25,6 +26,7 @@ export function CandidateMainPanel({ candidate, control }: Props) {
   const { toastService } = useServices();
   const candidateService = useCandidates();
   const notifyError = useErrorToast();
+  const session = useSessionRetry();
   const [saving, setSaving] = useState(false);
   const urgency = reviewUrgency(candidate.reviewDueAt);
 
@@ -37,7 +39,10 @@ export function CandidateMainPanel({ candidate, control }: Props) {
       toastService.show(t('candidate.panel.saved.main'), 'success');
       control.onClose();
     } catch (error) {
-      notifyError(error, t('candidate.edit.saveFailure'));
+      // KTL-46: a session that ended keeps the form; signing in again retries this save.
+      if (!session.handle(error, () => save(draft))) {
+        notifyError(error, t('candidate.edit.saveFailure'));
+      }
     } finally {
       setSaving(false);
     }
@@ -51,6 +56,7 @@ export function CandidateMainPanel({ candidate, control }: Props) {
       mode="form"
       formId={FORM_ID}
       saving={saving}
+      session={session}
     >
       {control.editing ? (
         <CandidateForm

@@ -305,3 +305,99 @@ candidate record SHALL hold no status and no free-text availability column.
 
 - **WHEN** a candidate row is inserted without availability values
 - **THEN** it is stored as `unknown` with no dates and no checker
+
+### Requirement: Experience years hold one decimal
+
+An experience entry's years SHALL be stored and exchanged as a decimal with at most one fraction
+digit, from 0 to 100, and the database SHALL reject a value outside that range.
+
+When a write carries a start date and an end date, or a start date on a current role, the API SHALL
+store the years worked out from those dates instead of any value the caller sent. The years are
+the months from the start month to the end month, both included, divided by 12, rounded to one
+decimal, half away from zero; the day of a date does not count, and a current role counts up to the
+month of the write. Otherwise the API SHALL store the caller's value, or none. Dates keep the day
+they are written with.
+
+#### Scenario: Years worked out from the dates
+
+- **WHEN** an experience entry from 2019-03-01 to 2024-06-30 is written with 9 years
+- **THEN** the entry is stored and returned with 5.3 years
+
+#### Scenario: Years typed by hand
+
+- **WHEN** an experience entry without a start date is written with 3.5 years
+- **THEN** the entry is stored and returned with 3.5 years
+
+#### Scenario: Years out of range
+
+- **WHEN** an experience entry is written with -1 or 100.1 years, or with two fraction digits
+- **THEN** the write is refused as a validation error and nothing changes
+
+### Requirement: Experience sector is optional and dates are not in the future
+
+An experience entry's sector SHALL be optional: an entry written with no sector, or a blank one,
+SHALL be stored with no sector reference and returned with `sector: null`. A sector that is given
+SHALL still reference an existing catalog entry of the sector family.
+
+Neither an experience entry's start date nor its end date SHALL fall in a month after the current
+month (UTC). A write holding such an entry SHALL be refused as a validation error with
+`candidate.experience.date.future`, and nothing SHALL change. A date in the current month is
+accepted.
+
+#### Scenario: Entry without a sector
+
+- **WHEN** an experience entry is written with no sector
+- **THEN** it is stored with no sector reference and read back with `sector: null`
+
+#### Scenario: Future start date
+
+- **WHEN** a current experience entry is written with a start date in the next month
+- **THEN** the write is refused with `candidate.experience.date.future` and nothing changes
+
+#### Scenario: Current month
+
+- **WHEN** a current experience entry is written with a start date in the current month
+- **THEN** the write succeeds
+
+### Requirement: Experience functions are sanitised rich text
+
+An experience entry's functions SHALL be accepted as rich text and SHALL be reduced, before
+storage, to paragraphs, line breaks, bold, italic, ordered lists, unordered lists and list items.
+Underline SHALL be removed and its text kept. Scripts, event attributes, style attributes, links,
+images, embedded content and every other element or attribute SHALL be neither stored nor returned
+as active markup. A value stored with underline before it was removed MAY still be returned with
+it.
+
+The sanitised value SHALL be at most 20,000 characters, and a longer one SHALL be refused as a
+validation error. Functions SHALL stay encrypted at rest.
+
+A stored value that contains no paragraph or list element SHALL be returned as escaped text with
+one paragraph per non-empty line. Every value returned SHALL contain only the allowed markup.
+Validation messages, problem responses and logs SHALL NOT contain the value.
+
+#### Scenario: Dangerous markup is removed
+
+- **WHEN** an experience entry's functions contain a script, an `onclick` attribute, a `style`
+  attribute, a link and an image
+- **THEN** none of them is stored or returned, and the remaining text is kept
+
+#### Scenario: Equivalent emphasis is normalised
+
+- **WHEN** functions use `<b>`, `<i>` and `<u>`
+- **THEN** they are returned as `<strong>` and `<em>`, and the underlined words as plain text
+
+#### Scenario: Functions too long
+
+- **WHEN** an experience entry's sanitised functions exceed 20,000 characters
+- **THEN** the write is refused as a validation error that does not contain the text, and nothing
+  changes
+
+#### Scenario: Legacy plain text is returned safely
+
+- **WHEN** a stored functions value is plain text with two lines, one of them containing `a < b`
+- **THEN** the API returns two paragraphs with the `<` escaped
+
+#### Scenario: Functions stay encrypted
+
+- **WHEN** the experience table is read directly in the database after a rich-text write
+- **THEN** the functions column holds ciphertext and not the text written

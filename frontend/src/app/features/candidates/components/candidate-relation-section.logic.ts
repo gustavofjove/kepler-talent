@@ -194,7 +194,9 @@ export function detailText(
   if (detail === 'certification') return text(item, 'certification') || undefined;
   if (detail === 'yearsExperience') {
     const value = years(item);
-    return value === undefined ? undefined : t('candidate.profile.yearsCount', { years: value });
+    return value === undefined
+      ? undefined
+      : t('candidate.profile.yearsCount', { count: value, years: value });
   }
   return undefined;
 }

@@ -16,7 +16,8 @@ describe('i18n foundation', () => {
   });
 
   it('interpolates values', () => {
-    expect(i18n.t('candidate.profile.yearsCount', { years: 3 })).toBe('3 años');
+    expect(i18n.t('candidate.profile.yearsCount', { count: 3, years: 3 })).toBe('3 años');
+    expect(i18n.t('candidate.profile.yearsCount', { count: 1, years: 1 })).toBe('1 año');
   });
 
   it('resolves every CV preview message', () => {
@@ -65,6 +66,7 @@ describe('i18n foundation', () => {
       'save',
       'cancel',
       'done',
+      'doneAria',
       'saved.main',
       'discardTitle',
       'leaveTitle',
@@ -118,7 +120,7 @@ describe('i18n foundation', () => {
 
   describe('errorText', () => {
     it('resolves a keyed error through the translation function', () => {
-      const error = new TranslatableError('candidate.profile.yearsCount', { years: 2 });
+      const error = new TranslatableError('candidate.profile.yearsCount', { count: 2, years: 2 });
 
       expect(errorText(error, i18n.t)).toBe('2 años');
     });

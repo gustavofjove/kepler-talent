@@ -83,9 +83,31 @@ describe('candidate relation validators', () => {
   it.each([
     ['company', 'La empresa es obligatoria.'],
     ['position', 'El puesto es obligatorio.'],
-    ['sector', 'El sector es obligatorio.'],
   ] as const)('refuses experience without %s', (field, message) => {
     expect(() => validateExperienceEntry(experience({ [field]: '' }))).toThrow(message);
+  });
+
+  it('accepts experience without a sector (KTL-46 follow-up)', () => {
+    expect(() => validateExperienceEntry(experience({ sector: '' }))).not.toThrow();
+    expect(() => validateExperienceEntry(experience({ sector: undefined }))).not.toThrow();
+  });
+
+  it('refuses an experience date after the current month, but not in it', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 10, 5));
+    try {
+      expect(() =>
+        validateExperienceEntry(experience({ startDate: '2026-12-01', isCurrent: true })),
+      ).toThrow('Las fechas de una experiencia no pueden ser posteriores al mes actual.');
+      expect(() =>
+        validateExperienceEntry(experience({ startDate: '2025-01-01', endDate: '2027-01-01' })),
+      ).toThrow(/posteriores al mes actual/);
+      expect(() =>
+        validateExperienceEntry(experience({ startDate: '2026-11-01', isCurrent: true })),
+      ).not.toThrow();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('refuses an end date before the start date and negative years', () => {
@@ -150,6 +172,22 @@ describe('CandidateRelationsService', () => {
     await expect(
       relations.saveExperience(candidateId, [experience({ yearsExperience: -1 })]),
     ).rejects.toThrow(/no pueden ser negativos/i);
+  });
+
+  it('names a stored entry with future dates that blocks the list, and writes nothing', async () => {
+    const stored = experience({
+      company: 'Kepler',
+      position: 'Técnico',
+      startDate: '2999-12-01',
+      isCurrent: true,
+    });
+
+    await expect(
+      relations.saveExperience(candidateId, [stored, experience({ startDate: '2020-01-01' })]),
+    ).rejects.toThrow(
+      'La experiencia «Técnico» en Kepler tiene fechas posteriores al mes actual. Corrígelas con «Editar» para poder guardar cambios en Experiencia.',
+    );
+    expect(candidateService.find(candidateId)?.experience).toHaveLength(0);
   });
 
   it('saves an empty list, removing every entry', async () => {

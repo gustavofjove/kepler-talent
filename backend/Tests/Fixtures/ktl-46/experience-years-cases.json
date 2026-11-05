@@ -1,0 +1,114 @@
+[
+  {
+    "name": "both dates, the spec example",
+    "startDate": "2019-03-01",
+    "endDate": "2024-06-01",
+    "isCurrent": false,
+    "today": "2026-11-04",
+    "years": 5.3
+  },
+  {
+    "name": "the day of a stored date is ignored",
+    "startDate": "2019-03-15",
+    "endDate": "2024-06-30",
+    "isCurrent": false,
+    "today": "2026-11-04",
+    "years": 5.3
+  },
+  {
+    "name": "one month",
+    "startDate": "2024-05-01",
+    "endDate": "2024-05-01",
+    "isCurrent": false,
+    "today": "2026-11-04",
+    "years": 0.1
+  },
+  {
+    "name": "January to December is one year",
+    "startDate": "2020-01-01",
+    "endDate": "2020-12-01",
+    "isCurrent": false,
+    "today": "2026-11-04",
+    "years": 1
+  },
+  {
+    "name": "January to the next January is thirteen months",
+    "startDate": "2023-01-01",
+    "endDate": "2024-01-01",
+    "isCurrent": false,
+    "today": "2026-11-04",
+    "years": 1.1
+  },
+  {
+    "name": "three months round half up",
+    "startDate": "2024-01-01",
+    "endDate": "2024-03-01",
+    "isCurrent": false,
+    "today": "2026-11-04",
+    "years": 0.3
+  },
+  {
+    "name": "nine months round half up",
+    "startDate": "2024-01-01",
+    "endDate": "2024-09-01",
+    "isCurrent": false,
+    "today": "2026-11-04",
+    "years": 0.8
+  },
+  {
+    "name": "current role counts up to this month",
+    "startDate": "2024-12-01",
+    "endDate": null,
+    "isCurrent": true,
+    "today": "2026-11-04",
+    "years": 2
+  },
+  {
+    "name": "current role ignores a stray end date",
+    "startDate": "2024-12-01",
+    "endDate": "2025-01-01",
+    "isCurrent": true,
+    "today": "2026-11-04",
+    "years": 2
+  },
+  {
+    "name": "capped at the maximum",
+    "startDate": "1900-01-01",
+    "endDate": "2024-01-01",
+    "isCurrent": false,
+    "today": "2026-11-04",
+    "years": 100
+  },
+  {
+    "name": "no start date",
+    "startDate": null,
+    "endDate": "2024-06-01",
+    "isCurrent": false,
+    "today": "2026-11-04",
+    "years": null
+  },
+  {
+    "name": "start date only, not current",
+    "startDate": "2019-03-01",
+    "endDate": null,
+    "isCurrent": false,
+    "today": "2026-11-04",
+    "years": null
+  },
+  {
+    "name": "current role without a start date",
+    "startDate": null,
+    "endDate": null,
+    "isCurrent": true,
+    "today": "2026-11-04",
+    "years": null
+  },
+  {
+    "name": "end before start",
+    "startDate": "2024-06-01",
+    "endDate": "2019-03-01",
+    "isCurrent": false,
+    "today": "2026-11-04",
+    "years": null
+  }
+]

@@ -22,6 +22,7 @@ import { ConfirmDialogService } from '../../shared/components/confirm-dialog.ser
 import { ApiTransport } from '../http/api-transport';
 import { readAppConfig } from '../services/app-config.model';
 import { createTokenSource } from '../auth/token-source';
+import { UnsavedChangesRegistry } from '../state/unsaved-changes';
 
 /**
  * Composition root - replaces Angular's `providedIn: 'root'` injector.
@@ -40,7 +41,8 @@ const apiTransport = new ApiTransport(
   () => tokenSource.getToken(),
   () => authServiceRef.current?.handleUnauthorized(),
 );
-const authService = new AuthService(tokenSource, apiTransport, appNavigator);
+const unsavedChanges = new UnsavedChangesRegistry();
+const authService = new AuthService(tokenSource, apiTransport, appNavigator, unsavedChanges);
 authServiceRef.current = authService;
 const roleService = new RoleService(apiTransport);
 const profileService = new ProfileService(apiTransport);
@@ -50,6 +52,7 @@ const candidateService = new CandidateService(candidateApi);
 export const services = {
   appNavigator,
   authService,
+  unsavedChanges,
   toastService: new ToastService(),
   observabilityService: new ObservabilityService(),
   confirmDialogService: new ConfirmDialogService(),

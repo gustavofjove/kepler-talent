@@ -1,6 +1,6 @@
 using KeplerTalento.Application.Abstractions.Identity;
 using KeplerTalento.Application.Abstractions.Persistence;
-using KeplerTalento.Application.Abstractions.Positions;
+using KeplerTalento.Application.Abstractions.RichText;
 using KeplerTalento.Application.Common.Errors;
 using KeplerTalento.Application.Features.Search;
 using KeplerTalento.Domain.Positions;
@@ -91,9 +91,9 @@ public static class PositionErrors
 
 internal static class PositionDescription
 {
-    public static string Sanitize(IPositionDescriptionSanitizer sanitizer, string? input)
+    public static string Sanitize(IRichTextSanitizer sanitizer, string? input)
     {
-        var sanitized = sanitizer.Sanitize(input ?? string.Empty);
+        var sanitized = sanitizer.Sanitize(input ?? string.Empty, RichTextProfile.PositionDescription);
         if (sanitized.Length > PositionText.MaximumDescriptionLength)
         {
             throw new RequestValidationException([new ValidationIssue(

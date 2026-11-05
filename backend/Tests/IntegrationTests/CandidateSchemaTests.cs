@@ -225,6 +225,65 @@ public sealed class CandidateSchemaTests(PostgreSqlFixture database) : IClassFix
     }
 
     [Fact]
+    public async Task Experience_years_are_a_numeric_column_with_one_decimal()
+    {
+        await PrepareAsync();
+        await using var connection = new NpgsqlConnection(database.ConnectionString);
+        await connection.OpenAsync();
+
+        await using var column = new NpgsqlCommand(
+            """
+            SELECT data_type, numeric_precision, numeric_scale
+            FROM information_schema.columns
+            WHERE table_name = 'CND_CandidateExperience' AND column_name = 'YearsExperience'
+            """,
+            connection);
+        await using var reader = await column.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+        Assert.Equal(("numeric", 4, 1), (reader.GetString(0), reader.GetInt32(1), reader.GetInt32(2)));
+    }
+
+    [Theory]
+    [InlineData("-0.1", null)]
+    [InlineData("100.1", null)]
+    [InlineData("0", "0.0")]
+    [InlineData("100", "100.0")]
+    [InlineData("5.3", "5.3")]
+    public async Task Experience_years_outside_0_to_100_are_rejected_by_the_database(string years, string? stored)
+    {
+        var catalog = await PrepareAsync();
+        var candidateId = Guid.NewGuid();
+        var experienceId = Guid.NewGuid();
+        await using (var seed = NewContext())
+        {
+            seed.Candidates.Add(NewCandidate(candidateId, DateTimeOffset.UtcNow));
+            seed.CandidateExperience.Add(new CandidateExperience(
+                experienceId, candidateId, catalog.First(CatalogFamilies.Sector), "Empresa Sintética", "Puesto"));
+            await seed.SaveChangesAsync();
+        }
+
+        // The validator and the domain refuse first; the check is what holds for a bulk writer
+        // that reaches the table without going through the entity.
+        await using var connection = new NpgsqlConnection(database.ConnectionString);
+        await connection.OpenAsync();
+        await using var command = new NpgsqlCommand(
+            "UPDATE \"CND_CandidateExperience\" SET \"YearsExperience\" = @years WHERE \"Id\" = @id RETURNING \"YearsExperience\"::text",
+            connection);
+        command.Parameters.AddWithValue("years", decimal.Parse(years, System.Globalization.CultureInfo.InvariantCulture));
+        command.Parameters.AddWithValue("id", experienceId);
+
+        if (stored is null)
+        {
+            var failure = await Assert.ThrowsAsync<PostgresException>(() => command.ExecuteScalarAsync());
+            Assert.Equal("CK_CND_CandidateExperience_YearsExperience", failure.ConstraintName);
+        }
+        else
+        {
+            Assert.Equal(stored, (string?)await command.ExecuteScalarAsync());
+        }
+    }
+
+    [Fact]
     public async Task The_availability_columns_replace_the_status_and_default_to_unknown()
     {
         await PrepareAsync();

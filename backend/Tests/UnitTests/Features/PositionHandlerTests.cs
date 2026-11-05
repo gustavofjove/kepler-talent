@@ -1,6 +1,6 @@
 using KeplerTalento.Application.Abstractions.Identity;
 using KeplerTalento.Application.Abstractions.Persistence;
-using KeplerTalento.Application.Abstractions.Positions;
+using KeplerTalento.Application.Abstractions.RichText;
 using KeplerTalento.Application.Common.Errors;
 using KeplerTalento.Application.Features.Positions;
 using KeplerTalento.Application.Features.Search;
@@ -487,12 +487,13 @@ public sealed class PositionHandlerTests
 
     // ---- doubles ----
 
-    private sealed class PassThroughSanitizer(Func<string, string>? transform = null) : IPositionDescriptionSanitizer
+    private sealed class PassThroughSanitizer(Func<string, string>? transform = null) : IRichTextSanitizer
     {
         public List<string> Inputs { get; } = [];
 
-        public string Sanitize(string html)
+        public string Sanitize(string html, RichTextProfile profile)
         {
+            Assert.Equal(RichTextProfile.PositionDescription, profile);
             Inputs.Add(html);
             return transform is null ? html : transform(html);
         }

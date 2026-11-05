@@ -1,6 +1,8 @@
 using FluentValidation;
 using KeplerTalento.Application.Abstractions.Identity;
 using KeplerTalento.Application.Abstractions.Persistence;
+using KeplerTalento.Application.Abstractions.RichText;
+using KeplerTalento.Application.Common.Errors;
 using KeplerTalento.Domain.Candidates;
 using KeplerTalento.Domain.Catalogs;
 using MediatR;
@@ -35,11 +37,11 @@ public sealed record CandidateExperienceInput(
     Guid? Id,
     string Company,
     string Position,
-    string Sector,
+    string? Sector,
     string? Functions,
     string? StartDate,
     string? EndDate,
-    int? YearsExperience,
+    decimal? YearsExperience,
     bool IsCurrent,
     string? Notes);
 
@@ -106,7 +108,35 @@ public sealed class SetCandidateExperienceValidator : AbstractValidator<SetCandi
         {
             item.RuleFor(experience => experience.Company).MustHaveText().MustFitWithin(CandidateTextLimits.Company);
             item.RuleFor(experience => experience.Position).MustHaveText().MustFitWithin(CandidateTextLimits.Position);
+            // KTL-46: one decimal at most. The domain refuses the same range, but only this rule
+            // turns it into a validation problem instead of a server error.
+            item.RuleFor(experience => experience.YearsExperience)
+                .Must(years => years is null
+                    || (years >= 0 && years <= ExperienceYears.Maximum && decimal.Round(years.Value, 1) == years.Value))
+                .WithErrorCode(CandidateErrors.ExperienceYearsInvalid)
+                .WithMessage(CandidateErrors.ExperienceYearsInvalidMessage);
+            // KTL-46 follow-up: an experience cannot start or end in a month still to come.
+            item.RuleFor(experience => experience.StartDate)
+                .Must(NotAfterThisMonth)
+                .WithErrorCode(CandidateErrors.ExperienceDateFuture)
+                .WithMessage(CandidateErrors.ExperienceDateFutureMessage);
+            item.RuleFor(experience => experience.EndDate)
+                .Must(NotAfterThisMonth)
+                .WithErrorCode(CandidateErrors.ExperienceDateFuture)
+                .WithMessage(CandidateErrors.ExperienceDateFutureMessage);
         });
+
+    /// <summary>Only the month counts: the form sends the first day of the chosen month.</summary>
+    private static bool NotAfterThisMonth(string? value)
+    {
+        if (!CandidateDates.TryFromWire(value, out var date) || date is not { } day)
+        {
+            // Absent, or malformed, which the write reports on its own.
+            return true;
+        }
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        return day.Year * 12 + day.Month <= today.Year * 12 + today.Month;
+    }
 }
 
 /// <summary>
@@ -345,6 +375,7 @@ public sealed class SetCandidateEducationHandler(
 public sealed class SetCandidateExperienceHandler(
     ICandidateRepository candidates,
     ICatalogRepository catalogs,
+    IRichTextSanitizer sanitizer,
     ICurrentActor actor)
     : IRequestHandler<SetCandidateExperienceCommand, CandidateResponse>
 {
@@ -359,11 +390,17 @@ public sealed class SetCandidateExperienceHandler(
             request.Version,
             async (candidate, lookup, token) =>
             {
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
                 var replacement = new List<CandidateExperience>(request.Experience.Count);
                 foreach (var input in request.Experience)
                 {
-                    var sectorId = await lookup.ResolveAsync(
-                        CatalogFamilies.Sector, input.Sector, "Sector", token);
+                    // KTL-46: inside the relation write, so after its permission guard. The length
+                    // that counts is the sanitised one, as for position descriptions.
+                    var functions = SanitizeFunctions(input.Functions);
+                    // The sector is optional (KTL-46 follow-up); a given one must still resolve.
+                    Guid? sectorId = string.IsNullOrWhiteSpace(input.Sector)
+                        ? null
+                        : await lookup.ResolveAsync(CatalogFamilies.Sector, input.Sector, "Sector", token);
                     var existing = CandidateRelationWrite.Existing(candidate.Experience, input.Id);
                     if (existing is null)
                     {
@@ -379,18 +416,38 @@ public sealed class SetCandidateExperienceHandler(
                     {
                         existing.SetValues(sectorId, input.Company, input.Position);
                     }
-                    existing.SetPeriod(
-                        CandidateRelationWrite.Date(input.StartDate),
-                        input.IsCurrent ? null : CandidateRelationWrite.Date(input.EndDate),
-                        input.IsCurrent);
-                    existing.SetFunctions(input.Functions);
-                    existing.SetYearsExperience(input.YearsExperience);
+                    var startDate = CandidateRelationWrite.Date(input.StartDate);
+                    var endDate = input.IsCurrent ? null : CandidateRelationWrite.Date(input.EndDate);
+                    existing.SetPeriod(startDate, endDate, input.IsCurrent);
+                    existing.SetFunctions(functions);
+                    // Years the dates determine are the API's to work out (design D4); the
+                    // caller's value counts only when they cannot be derived.
+                    existing.SetYearsExperience(
+                        ExperienceYears.From(startDate, endDate, input.IsCurrent, today) ?? input.YearsExperience);
                     existing.SetNotes(input.Notes);
                     replacement.Add(existing);
                 }
                 return candidate.ReplaceExperience(replacement, DateTimeOffset.UtcNow);
             },
             cancellationToken);
+
+    private string? SanitizeFunctions(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return null;
+        }
+        var sanitized = sanitizer.Sanitize(input, RichTextProfile.ExperienceFunctions);
+        if (sanitized.Length > CandidateTextLimits.Functions)
+        {
+            // The message names the limit, never the text.
+            throw new RequestValidationException([new ValidationIssue(
+                "Functions",
+                CandidateErrors.FieldTooLong,
+                CandidateErrors.FieldTooLongMessage)]);
+        }
+        return sanitized;
+    }
 }
 
 public sealed class SetCandidateSkillsHandler(

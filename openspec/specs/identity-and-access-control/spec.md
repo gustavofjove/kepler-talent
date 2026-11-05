@@ -533,9 +533,18 @@ permissions from the caller profile endpoint. It SHALL NOT construct a profile, 
 permission set locally, and SHALL NOT accept credentials that it validates itself.
 
 Every request the browser sends to the API SHALL carry the current bearer token. A response refusing
-the request as unauthenticated SHALL cause the browser to end the local session and return the user
-to sign-in rather than presenting a generic failure. In password mode, the token SHALL be kept only
-for the browser tab's session and SHALL be removed on sign-out or on such a refusal.
+the request as unauthenticated SHALL NOT be presented as a generic failure:
+
+- When the page holds no unsaved changes, the browser SHALL end the local session and return the
+  user to sign-in.
+- When the page holds unsaved changes, the browser SHALL keep the page and offer to sign in again in
+  place, using the same mode and the same rules as the sign-in screen.
+- A sign-in again in place SHALL replace the session token and reload the caller profile.
+- If the profile belongs to a different user, the unsaved changes SHALL be discarded and the browser
+  SHALL continue as after a fresh sign-in.
+
+In password mode, the token SHALL be kept only for the browser tab's session and SHALL be removed on
+sign-out or on such a refusal.
 
 Permissions held in the browser SHALL be used only to decide what to render. Every guarded
 destination SHALL remain protected by its route guard and by the API independently.
@@ -548,7 +557,7 @@ destination SHALL remain protected by its route guard and by the API independent
 
 #### Scenario: Browser is asked for credentials it would validate
 
-- **WHEN** the sign-in screen is inspected in any mode
+- **WHEN** the sign-in screen or the sign-in dialog is inspected in any mode
 - **THEN** it either delegates to the identity provider or submits the credentials to the API, and
   it never decides itself whether a user name and password are valid
 
@@ -571,8 +580,24 @@ destination SHALL remain protected by its route guard and by the API independent
 
 #### Scenario: Session expires while the application is open
 
-- **WHEN** an API request is refused as unauthenticated
+- **WHEN** an API request is refused as unauthenticated and the page holds no unsaved changes
 - **THEN** the local session is cleared and the user is returned to sign-in
+
+#### Scenario: Session expires while changes are unsaved
+
+- **WHEN** an API request is refused as unauthenticated while the page holds unsaved changes
+- **THEN** the page and its changes are kept and the user can sign in again without leaving it
+
+#### Scenario: Signing in again as the same user
+
+- **WHEN** a user signs in again in place as the same user
+- **THEN** the new token replaces the old one, the profile is reloaded, and the page is unchanged
+
+#### Scenario: Signing in again as another user
+
+- **WHEN** a user signs in again in place as a different user
+- **THEN** the unsaved changes are discarded and the application continues as that user's fresh
+  sign-in
 
 #### Scenario: User signs out
 

@@ -1,7 +1,7 @@
 using FluentValidation;
 using KeplerTalento.Application.Abstractions.Identity;
 using KeplerTalento.Application.Abstractions.Persistence;
-using KeplerTalento.Application.Abstractions.Positions;
+using KeplerTalento.Application.Abstractions.RichText;
 using KeplerTalento.Application.Common.Errors;
 using KeplerTalento.Application.Features.Search;
 using KeplerTalento.Domain.Positions;
@@ -33,7 +33,7 @@ public sealed class UpdatePositionValidator : AbstractValidator<UpdatePositionCo
     }
 }
 
-public sealed class CreatePositionHandler(IPositionRepository positions, IPositionDescriptionSanitizer sanitizer, ICurrentActor actor) : IRequestHandler<CreatePositionCommand, PositionResponse>
+public sealed class CreatePositionHandler(IPositionRepository positions, IRichTextSanitizer sanitizer, ICurrentActor actor) : IRequestHandler<CreatePositionCommand, PositionResponse>
 {
     public async Task<PositionResponse> Handle(CreatePositionCommand request, CancellationToken cancellationToken)
     {
@@ -54,7 +54,7 @@ public sealed class CreatePositionHandler(IPositionRepository positions, IPositi
     }
 }
 
-public sealed class UpdatePositionHandler(IPositionRepository positions, IPositionDescriptionSanitizer sanitizer, ICurrentActor actor) : IRequestHandler<UpdatePositionCommand, PositionResponse>
+public sealed class UpdatePositionHandler(IPositionRepository positions, IRichTextSanitizer sanitizer, ICurrentActor actor) : IRequestHandler<UpdatePositionCommand, PositionResponse>
 {
     public async Task<PositionResponse> Handle(UpdatePositionCommand request, CancellationToken cancellationToken)
     {

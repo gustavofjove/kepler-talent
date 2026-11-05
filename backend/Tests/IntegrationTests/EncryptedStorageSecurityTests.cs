@@ -35,13 +35,15 @@ public sealed class EncryptedStorageSecurityTests(PostgreSqlFixture database) : 
     private const string Notes = "Prefiere entrevistas por la tarde";
     private const string NoteBody = "Referencia confidencial del anterior empleo";
     private const string Company = "Talleres Quiroga SL";
+    // KTL-46: functions are rich text now; the words inside the markup must not leak either.
+    private const string Functions = "Soldadura TIG en calderería pesada";
     private const string SearchTerm = "Quiroga-Bermejo";
     private const string FileName = "CV Eulalia Quiroga.pdf";
 
     /// <summary>A stored envelope: prefix, key identifier and a payload, as opposed to the literal in SQL text.</summary>
     private static readonly System.Text.RegularExpressions.Regex Envelope = new(@"ktl1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{20,}");
 
-    private static readonly string[] Secrets = [FirstName, LastName, Email, Phone, Notes, NoteBody, Company, FileName];
+    private static readonly string[] Secrets = [FirstName, LastName, Email, Phone, Notes, NoteBody, Company, Functions, FileName];
 
     [Fact]
     public async Task Values_written_through_the_api_are_ciphertext_in_every_encrypted_column_and_in_a_full_table_copy()
@@ -179,7 +181,7 @@ public sealed class EncryptedStorageSecurityTests(PostgreSqlFixture database) : 
         {
             experience = new[]
             {
-                new CandidateExperienceInput(null, Company, "Soldadora", "Metal", "Soldadura TIG", null, null, 4, false, "Sin incidencias"),
+                new CandidateExperienceInput(null, Company, "Soldadora", "Metal", $"<p><strong>{Functions}</strong></p><ul><li><em>{Functions}</em></li></ul>", null, null, 4, false, "Sin incidencias"),
             },
             version = candidate.Version,
         });

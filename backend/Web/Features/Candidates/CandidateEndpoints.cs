@@ -272,19 +272,24 @@ public static class CandidateEndpoints
             .WithName("SetCandidateEducation")
             .WithCollectionResponses();
 
+        // Read by hand after the permission check, as availability is (KTL-46): functions carry
+        // rich text, so a malformed body must answer an unauthorised caller exactly as a valid
+        // one does.
         group.MapPut("/{id:guid}/experience", async (
                 Guid id,
-                SetExperienceRequest request,
+                HttpRequest http,
                 ISender sender,
                 ICurrentActor actor,
                 CancellationToken cancellationToken) =>
             {
                 Require(actor, Permissions.CandidatesUpdate);
+                var request = await ReadRequestAsync<SetExperienceRequest>(http, cancellationToken);
                 return Results.Ok(await sender.Send(
                     new SetCandidateExperienceCommand(id, request.Experience ?? [], request.Version),
                     cancellationToken));
             })
             .WithName("SetCandidateExperience")
+            .Accepts<SetExperienceRequest>("application/json")
             .WithCollectionResponses();
 
         group.MapPut("/{id:guid}/skills", async (
@@ -421,6 +426,28 @@ public static class CandidateEndpoints
             throw UnreadableAvailability();
         }
     }
+
+    /// <summary>Reads a body that framework binding would otherwise parse before authorization.</summary>
+    private static async Task<T> ReadRequestAsync<T>(HttpRequest http, CancellationToken cancellationToken)
+        where T : class
+    {
+        try
+        {
+            return await http.ReadFromJsonAsync<T>(cancellationToken) ?? throw CandidateRequestUnreadable();
+        }
+        catch (Exception exception) when (exception is System.Text.Json.JsonException
+            or InvalidOperationException
+            or BadHttpRequestException)
+        {
+            throw CandidateRequestUnreadable();
+        }
+    }
+
+    private static RequestValidationException CandidateRequestUnreadable() =>
+        new([new ValidationIssue(
+            "Request",
+            CandidateErrors.ConstraintViolation,
+            CandidateErrors.ConstraintViolationMessage)]);
 
     private static RequestValidationException UnreadableAvailability() =>
         new([new ValidationIssue(

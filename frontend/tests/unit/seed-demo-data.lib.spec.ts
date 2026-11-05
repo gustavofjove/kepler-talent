@@ -212,10 +212,10 @@ describe('demo dataset (KTL-40)', () => {
         if (end) expect(end > start && !Number.isNaN(Date.parse(end))).toBe(true);
       }
       const { experience } = lib.backgroundBodies(background, today);
+      // KTL-46: one decimal, as the API works them out from the dates.
       for (const row of experience) {
-        expect(
-          Number.isInteger(row['yearsExperience']) && Number(row['yearsExperience']) >= 0,
-        ).toBe(true);
+        const years = Number(row['yearsExperience']);
+        expect(years >= 0 && Math.round(years * 10) === years * 10).toBe(true);
       }
     }
   });

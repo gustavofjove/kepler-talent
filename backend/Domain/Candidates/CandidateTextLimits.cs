@@ -27,5 +27,11 @@ public static class CandidateTextLimits
     public const int Position = 200;
     public const int Certification = 160;
 
+    /// <summary>
+    /// Sanitised rich text of an experience's functions (KTL-46). Checked by the API only: the
+    /// column was unbounded and stays unbounded for the operator migration tool.
+    /// </summary>
+    public const int Functions = 20_000;
+
     public const int DocumentFileName = 255;
 }
