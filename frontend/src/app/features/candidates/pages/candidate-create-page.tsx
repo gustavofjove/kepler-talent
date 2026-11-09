@@ -8,6 +8,7 @@ import { Breadcrumb, type BreadcrumbItem } from '../../../shared/components/brea
 import { useCandidates } from '../use-candidates';
 import { CandidateForm } from '../components/candidate-form';
 import { CvDraftPicker, type CvDraftStatus } from '../components/cv-draft-picker';
+import { HeldCvPreview } from '../components/held-cv-preview';
 import type { Candidate, CandidateDraft } from '../models/candidate.models';
 import type { CvDraftSuggestion } from '../models/candidate-draft.models';
 
@@ -124,20 +125,33 @@ export function CandidateCreatePage() {
           </p>
         </div>
       </div>
-      <article className="panel">
-        <h2>{t('candidate.edit.mainData')}</h2>
-        <CvDraftPicker
-          busy={draftBusy}
-          status={draftStatus}
-          onPick={(file) => void readCv(file)}
-          attach={heldCv && canUpload ? { checked: attachCv, onChange: setAttachCv } : undefined}
-        />
-        <CandidateForm
-          onSave={(draft) => void save(draft)}
-          suggestion={suggestion}
-          onSuggestionApplied={suggestionApplied}
-        />
-      </article>
+      {/* KTL-47: the CV just read sits beside the form from a 1024 px content area, and after it
+          below that. The aside is empty, and collapses, until a draft has returned. */}
+      <div className="page-split page-split--create">
+        <div className="page-split__layout">
+          <div className="page-split__main">
+            <article className="panel">
+              <h2>{t('candidate.edit.mainData')}</h2>
+              <CvDraftPicker
+                busy={draftBusy}
+                status={draftStatus}
+                onPick={(file) => void readCv(file)}
+                attach={
+                  heldCv && canUpload ? { checked: attachCv, onChange: setAttachCv } : undefined
+                }
+              />
+              <CandidateForm
+                onSave={(draft) => void save(draft)}
+                suggestion={suggestion}
+                onSuggestionApplied={suggestionApplied}
+              />
+            </article>
+          </div>
+          <aside className="page-split__aside">
+            {heldCv ? <HeldCvPreview file={heldCv} /> : null}
+          </aside>
+        </div>
+      </div>
     </section>
   );
 }

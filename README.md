@@ -188,6 +188,14 @@ principal mediante la subida de documentos habitual (`POST /api/candidates/{id}/
 cuarentena y análisis ClamAV). Si la subida falla, el candidato se conserva y un aviso indica que
 el CV puede subirse desde su ficha.
 
+Desde KTL-47, en cuanto el CV se ha leído (y, por tanto, ClamAV lo ha dado por limpio) se muestra
+una vista previa junto al formulario para comprobar o copiar los datos. Con un área de contenido de
+al menos 1024 px aparece como columna fija a la derecha; por debajo, a continuación del formulario.
+Un PDF se abre en el visor del navegador; para un DOCX se indica que la vista previa solo está
+disponible para PDF. La vista previa usa el archivo que ya tiene el navegador: no se sube ni se
+guarda nada hasta pulsar «Guardar». Consulta las
+[notas de la versión](docs/ktl-47/release-notes.md).
+
 La API (`POST /api/candidates/draft-from-document`) exige `candidates.create`, analiza el archivo
 con ClamAV antes de leerlo y lo mantiene solo en memoria durante la petición: no se guarda, no se
 registra en los logs ni en la auditoría, que anota únicamente el intento y su resultado. La

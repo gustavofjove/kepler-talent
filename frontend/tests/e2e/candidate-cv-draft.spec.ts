@@ -85,4 +85,46 @@ test.describe('Candidate draft from a CV', () => {
     await expect(page.locator('input[name="firstName"]')).toHaveValue(`Tecleado${marker}`);
     await expect(page.getByTestId('firstName-suggested')).toHaveCount(0);
   });
+
+  // KTL-47: the CV just read is shown beside the form from a 1024 px content area.
+  test('shows the read CV beside the form on a laptop, and keeps it in view', async ({ page }) => {
+    const marker = Date.now().toString();
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await page.goto('/app/candidates/new');
+    await expect(page.getByTestId('held-cv-preview')).toHaveCount(0);
+
+    await pick(page, marker);
+
+    const preview = page.getByTestId('held-cv-preview');
+    await expect(page.getByTestId('held-cv-preview-viewer')).toBeVisible({ timeout: 90_000 });
+    const form = page.getByTestId('cv-draft-picker');
+    const formBox = (await form.boundingBox())!;
+    const previewBox = (await preview.boundingBox())!;
+    expect(previewBox.x).toBeGreaterThanOrEqual(formBox.x + formBox.width);
+
+    await page.locator('button[type="submit"]').scrollIntoViewIfNeeded();
+    const scrolled = (await preview.boundingBox())!;
+    expect(scrolled.y).toBeGreaterThanOrEqual(0);
+    expect(scrolled.y + scrolled.height).toBeLessThanOrEqual(768);
+    await expect(page).toHaveURL(/\/app\/candidates\/new$/);
+  });
+
+  test('shows the read CV after the form on a phone, without horizontal scroll', async ({
+    page,
+  }) => {
+    const marker = Date.now().toString();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/app/candidates/new');
+
+    await pick(page, marker);
+
+    const preview = page.getByTestId('held-cv-preview');
+    await expect(preview).toBeAttached({ timeout: 90_000 });
+    const submitBox = (await page.locator('button[type="submit"]').boundingBox())!;
+    const previewBox = (await preview.boundingBox())!;
+    expect(previewBox.y).toBeGreaterThanOrEqual(submitBox.y + submitBox.height);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+  });
 });
