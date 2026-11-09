@@ -130,7 +130,9 @@ that makes the candidate tables offer «Ver». A candidate without a primary CV,
 is of another format, still pending, refused, unscannable or a legacy record without a binary,
 SHALL get no preview. Their documents stay available from the Documentos panel. When a pending
 primary CV is reported clean while the page is open, the preview SHALL appear without a reload.
-The new-candidate page SHALL NOT show a preview.
+The new-candidate page SHALL show only the preview of the CV read on that page, as «Read CV preview
+on the create page» in `candidate-cv-draft` describes, and the thresholds below SHALL NOT apply to
+it.
 
 When the preview is shown and the page's content area is at least 1360 CSS pixels wide:
 
@@ -194,10 +196,10 @@ first and then the preview, at every width.
   field columns, and Datos principales, Educación, Experiencia or Documentos is in edit mode
 - **THEN** that panel's form shows its fields in one column
 
-#### Scenario: New candidate page has no preview
+#### Scenario: New candidate page previews only the read CV
 
-- **WHEN** an editor opens the new-candidate page
-- **THEN** no CV preview is shown
+- **WHEN** an editor opens the new-candidate page and has not read a CV
+- **THEN** no CV preview is shown and no document content is requested
 
 ### Requirement: One candidate page with per-panel edit mode
 

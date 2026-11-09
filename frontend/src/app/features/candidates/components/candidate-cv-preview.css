@@ -39,3 +39,21 @@
     min-height: 0;
   }
 }
+
+/* The create page's preview (KTL-47) fills its aside from the page's own, earlier threshold. */
+@container page-split (min-width: 1024px) {
+  .page-split--create .page-split__aside > .cv-preview {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .page-split--create .page-split__aside > .cv-preview .cv-preview__viewer {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+.cv-preview__filename {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}

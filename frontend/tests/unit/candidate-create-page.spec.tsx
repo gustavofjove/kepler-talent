@@ -28,9 +28,15 @@ describe('CandidateCreatePage (KTL-29)', () => {
   let extract: ReturnType<typeof vi.fn>;
   let upload: ReturnType<typeof vi.fn>;
   let showToast: ReturnType<typeof vi.fn>;
+  let createObjectURL: ReturnType<typeof vi.fn>;
+  let revokeObjectURL: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // jsdom has no object URLs; the read CV's preview (KTL-47) needs one for a PDF.
+    createObjectURL = vi.fn(() => 'blob:held');
+    revokeObjectURL = vi.fn();
+    Object.assign(URL, { createObjectURL, revokeObjectURL });
     bed = createCandidateTestBed();
     granted = new Set(['candidates.read', 'candidates.create', 'candidates.update']);
     upload = vi.fn().mockResolvedValue({});
@@ -340,6 +346,102 @@ describe('CandidateCreatePage (KTL-29)', () => {
       expect(upload).not.toHaveBeenCalled();
       expect(screen.getByTestId('location')).toHaveTextContent('/app/candidates/new');
       expect(screen.getByTestId('cv-draft-attach')).toBeChecked();
+    });
+  });
+
+  describe('Preview of the read CV (KTL-47)', () => {
+    const preview = () => screen.queryByTestId('held-cv-preview');
+
+    it('shows no preview before a CV has been read', async () => {
+      await renderPage();
+      await screen.findByLabelText('Nombre');
+
+      expect(preview()).not.toBeInTheDocument();
+      expect(createObjectURL).not.toHaveBeenCalled();
+    });
+
+    it('shows no preview while the draft request is in flight', async () => {
+      extract.mockReturnValue(new Promise(() => undefined));
+      await renderPage();
+      await screen.findByLabelText('Nombre');
+
+      await pickCv();
+
+      expect(screen.getByTestId('cv-draft-status')).toHaveTextContent('Analizando el CV');
+      expect(preview()).not.toBeInTheDocument();
+    });
+
+    it.each([
+      ['a draft with fields', undefined],
+      ['an image-only CV', { draftId: 'd1', outcome: 'cv_draft.no_text', fields: {} }],
+    ])('previews the PDF after %s', async (_, draft) => {
+      if (draft) extract.mockResolvedValue(draft);
+      const cv = new File(['%PDF-test'], 'cv-ana.pdf', { type: 'application/pdf' });
+      await renderPage();
+      await screen.findByLabelText('Nombre');
+
+      await pickCv(cv);
+
+      expect(await screen.findByTestId('held-cv-preview-viewer')).toBeInTheDocument();
+      expect(createObjectURL).toHaveBeenCalledWith(cv);
+    });
+
+    it('shows no preview for a refused CV', async () => {
+      extract.mockRejectedValue(new TranslatableError('candidate.cvDraft.error.scanner'));
+      await renderPage();
+      await screen.findByLabelText('Nombre');
+
+      await pickCv();
+
+      await waitFor(() => expect(screen.getByTestId('cv-draft-status')).toHaveClass('error'));
+      expect(preview()).not.toBeInTheDocument();
+      expect(createObjectURL).not.toHaveBeenCalled();
+    });
+
+    it('removes the preview as soon as another CV is picked', async () => {
+      await renderPage();
+      await screen.findByLabelText('Nombre');
+      await pickCv();
+      await screen.findByTestId('held-cv-preview');
+      extract.mockReturnValue(new Promise(() => undefined));
+
+      await pickCv(new File(['%PDF-2'], 'segundo.pdf', { type: 'application/pdf' }));
+
+      expect(preview()).not.toBeInTheDocument();
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:held');
+    });
+
+    it('keeps the preview when the attach choice is cleared', async () => {
+      granted.add('documents.upload');
+      await renderPage();
+      await screen.findByLabelText('Nombre');
+
+      await pickCv();
+      await userEvent.click(await screen.findByTestId('cv-draft-attach'));
+
+      expect(screen.getByTestId('held-cv-preview')).toBeInTheDocument();
+    });
+
+    it('previews the CV for a creator without documents.upload', async () => {
+      await renderPage();
+      await screen.findByLabelText('Nombre');
+
+      await pickCv();
+
+      expect(await screen.findByTestId('held-cv-preview')).toBeInTheDocument();
+      expect(screen.queryByTestId('cv-draft-attach')).not.toBeInTheDocument();
+    });
+
+    it('shows the PDF-only message for a DOCX', async () => {
+      await renderPage();
+      await screen.findByLabelText('Nombre');
+
+      await pickCv(new File(['PK'], 'cv-ana.docx'));
+
+      expect(await screen.findByTestId('held-cv-preview-unsupported')).toHaveTextContent(
+        'cv-ana.docx',
+      );
+      expect(screen.queryByTestId('held-cv-preview-viewer')).not.toBeInTheDocument();
     });
   });
 });

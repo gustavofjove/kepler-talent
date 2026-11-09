@@ -765,6 +765,26 @@ input[type='radio']:disabled,
   }
 }
 
+/* The create page places the CV just read beside the form much earlier (KTL-47): the form is a
+ * single panel, so a laptop-width content area is enough. The extra class outranks the 1360 px
+ * rule above, so the create page keeps these proportions at every width from 1024 px. */
+@container page-split (min-width: 1024px) {
+  .page-split--create > .page-split__layout:has(> .page-split__aside .cv-preview) {
+    grid-template-columns: minmax(0, 1fr) minmax(440px, 45%);
+  }
+
+  .page-split--create
+    > .page-split__layout:has(> .page-split__aside .cv-preview)
+    > .page-split__aside {
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 64px - 40px);
+    position: sticky;
+    top: calc(64px + 20px);
+  }
+}
+
 /* Field grids follow the sections column, whatever the viewport width. */
 @container page-split-main (max-width: 620px) {
   .grid.two {
