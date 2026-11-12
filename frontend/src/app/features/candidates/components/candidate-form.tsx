@@ -8,8 +8,11 @@ import type {
   CvDraftSuggestion,
 } from '../models/candidate-draft.models';
 import { applySuggestion, toDraft } from './candidate-form.logic';
+import { validatedContacts } from '../services/candidate-contact.rules';
+import { errorText } from '../../../core/i18n/translatable-error';
 
 interface CandidateFormProps {
+  saveError?: string;
   candidate?: Candidate;
   onSave: (draft: CandidateDraft) => void;
   /**
@@ -26,6 +29,7 @@ interface CandidateFormProps {
 
 /** The core record only; the other sections are panels of their own on the candidate page. */
 export function CandidateForm({
+  saveError,
   candidate,
   onSave,
   formId,
@@ -108,14 +112,18 @@ export function CandidateForm({
       return;
     }
     setError('');
-    onSave({ ...draft });
+    try {
+      onSave(validatedContacts(draft));
+    } catch (error) {
+      setError(errorText(error, t));
+    }
   };
 
   return (
     // noValidate: the browser must not block submit, so the Spanish message at the top is
     // what users (and the e2e spec) see.
     <form id={formId} className="section-block" onSubmit={submit} noValidate>
-      <FormError message={error} />
+      <FormError message={error || saveError || ''} />
       <div className="grid two">
         <div className="field">
           <label htmlFor="firstName">{t('candidate.form.firstName')}</label>

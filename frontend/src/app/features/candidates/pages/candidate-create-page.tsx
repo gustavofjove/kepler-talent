@@ -32,6 +32,7 @@ export function CandidateCreatePage() {
   const [draftStatus, setDraftStatus] = useState<CvDraftStatus | null>(null);
   const [heldCv, setHeldCv] = useState<File>();
   const [attachCv, setAttachCv] = useState(true);
+  const [saveError, setSaveError] = useState('');
   const pending = useRef<AbortController | null>(null);
 
   useEffect(() => () => pending.current?.abort(), []);
@@ -46,11 +47,12 @@ export function CandidateCreatePage() {
   ];
 
   const save = async (draft: CandidateDraft): Promise<void> => {
+    setSaveError('');
     let created: Candidate;
     try {
       created = await candidateService.create(draft);
     } catch (error) {
-      notifyError(error, t('candidate.edit.saveFailure'));
+      setSaveError(notifyError(error, t('candidate.edit.saveFailure')));
       return;
     }
     if (heldCv && attachCv && canUpload) {
@@ -141,6 +143,7 @@ export function CandidateCreatePage() {
                 }
               />
               <CandidateForm
+                saveError={saveError}
                 onSave={(draft) => void save(draft)}
                 suggestion={suggestion}
                 onSuggestionApplied={suggestionApplied}

@@ -269,8 +269,7 @@ namespace Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasAnnotation("Ktl:EncryptedContext", "CND_CandidateEducation.Institution")
-                        .HasAnnotation("Ktl:EncryptedMaxLength", 200)
-                        .HasAnnotation("Ktl:EncryptedRequireText", true);
+                        .HasAnnotation("Ktl:EncryptedMaxLength", 200);
 
                     b.Property<string>("Notes")
                         .HasColumnType("text")

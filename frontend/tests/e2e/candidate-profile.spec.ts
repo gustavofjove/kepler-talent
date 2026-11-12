@@ -36,6 +36,102 @@ async function expectNoHorizontalScroll(page: import('@playwright/test').Page): 
 }
 
 test.describe('Candidate profile enrichment', () => {
+  test('preserves observations and displays newest education with an optional centre', async ({
+    page,
+  }) => {
+    const id = await createCandidate(page, `History${Date.now()}`, 'Test');
+    await editPanel(page, 'main');
+    const notes = 'Line one\n\nLine two <script>';
+    await page.locator('textarea[name="notes"]').fill(notes);
+    await savePanel(page, 'main');
+    await expect(page.locator('.candidate-observations')).toHaveText(notes);
+    await expect(page.locator('.candidate-observations')).toHaveCSS('white-space', 'pre-wrap');
+    const headers = authorizationHeaders(page);
+    const current = await (await page.request.get(`/api/candidates/${id}`, { headers })).json();
+    const response = await page.request.put(`/api/candidates/${id}/education`, {
+      headers,
+      data: {
+        version: current.version,
+        education: [
+          {
+            educationType: 'Grado',
+            degree: 'Older',
+            institution: '',
+            status: 'Finalizada',
+            endYear: 2020,
+          },
+          {
+            educationType: 'Grado',
+            degree: 'Newer',
+            institution: '',
+            status: 'Finalizada',
+            endYear: 2024,
+          },
+        ],
+      },
+    });
+    expect(response.ok()).toBeTruthy();
+    await page.reload();
+    const panel = page.getByTestId('candidate-education');
+    await expect(panel.locator('.badge')).toHaveText(['Newer', 'Older']);
+    await editPanel(page, 'education');
+    await expect(panel.locator('.badge')).toHaveText(['Newer', 'Older']);
+    await panel.getByTestId('education-edit').last().click();
+    await panel.locator('input[name="institution"]').fill('');
+    await panel.locator('input[name="degree"]').fill('Older updated');
+    await panel.locator('input[name="endYear"]').fill('2025');
+    await panel.locator('button[type="submit"]').click();
+    await expect(panel.locator('.badge')).toHaveText(['Older updated', 'Newer']);
+    await finishPanel(page, 'education');
+    const beforeExperience = await (
+      await page.request.get(`/api/candidates/${id}`, { headers })
+    ).json();
+    const experienceWrite = await page.request.put(`/api/candidates/${id}/experience`, {
+      headers,
+      data: {
+        version: beforeExperience.version,
+        experience: [
+          {
+            company: 'Test',
+            position: 'Old role',
+            startDate: '2019-01-01',
+            endDate: '2020-01-01',
+            isCurrent: false,
+          },
+          { company: 'Test', position: 'Undated role', yearsExperience: 0, isCurrent: false },
+          { company: 'Test', position: 'Current role', startDate: '2022-01-01', isCurrent: true },
+          {
+            company: 'Test',
+            position: 'Recent role',
+            startDate: '2021-01-01',
+            endDate: '2023-01-01',
+            isCurrent: false,
+          },
+        ],
+      },
+    });
+    expect(experienceWrite.ok()).toBeTruthy();
+    await page.reload();
+    const experiencePanel = page.getByTestId('candidate-experience');
+    await expect(experiencePanel.locator('.badge')).toHaveText([
+      'Current role',
+      'Recent role',
+      'Old role',
+      'Undated role',
+    ]);
+    await expect(experiencePanel).not.toContainText('0 años');
+    await editPanel(page, 'experience');
+    await expect(experiencePanel.locator('.badge')).toHaveText([
+      'Current role',
+      'Recent role',
+      'Old role',
+      'Undated role',
+    ]);
+    await finishPanel(page, 'experience');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expectNoHorizontalScroll(page);
+    await expect(page.locator('.candidate-observations')).toHaveText(notes);
+  });
   test('stages languages and skills in Competencias, saves them together, and never duplicates', async ({
     page,
   }) => {

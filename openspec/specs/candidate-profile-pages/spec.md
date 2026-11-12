@@ -278,7 +278,7 @@ edición» SHALL only return the form to a new entry, writing nothing.
 An update SHALL:
 
 - apply the same validation as an add;
-- be written at once, replacing the entry where it stands;
+- be written at once under the same identity, with its visible position determined by the history ordering rules;
 - keep its identity and the fields the form does not show (notes);
 - return the form to a new entry once written.
 
@@ -1087,7 +1087,8 @@ zero in steps of one tenth.
 Every Experiencia row SHALL show the years its dates determine whenever they
 determine them, a current role's worked out up to the month the page is shown. A value typed by hand
 SHALL be shown only for an entry whose dates do not determine its years. Years SHALL read «1 año»
-for one and «N años» otherwise.
+for one and «N años» otherwise. Entry summaries SHALL omit absent, null and zero years and
+their separators, without changing stored values or the calculated form field.
 
 #### Scenario: Typed years the dates contradict
 
@@ -1208,3 +1209,125 @@ user to sign-in, as before.
 
 - **WHEN** no panel has unsaved changes and an API request is refused as unauthenticated
 - **THEN** the session ends and the user is returned to sign-in
+
+### Requirement: Internal observations preserve plain-text layout
+
+Read-only Observaciones internas SHALL preserve authored line breaks and blank lines, wrap long
+lines and display markup-like text literally. Editing, saving and reloading SHALL retain the
+content. These rules SHALL apply to the core observations field independently of custom notes.
+
+#### Scenario: Multiline observations round-trip
+
+- **WHEN** an editor saves observations containing two lines separated by a blank line and
+  reloads the candidate
+- **THEN** the read view preserves both line breaks and the blank line
+
+#### Scenario: Literal markup and long lines
+
+- **WHEN** observations contain `<script>` text and an unbroken long line
+- **THEN** the markup is displayed literally without execution and the content wraps without
+  horizontal page scrolling at 390px
+
+### Requirement: Absent and zero duration labels are hidden
+
+Program chips and experience summaries SHALL omit absent, null and zero years and their
+separators in read and edit lists. Positive values SHALL retain localized singular/plural and
+number formatting. Hiding a label SHALL NOT change stored values or duration calculations.
+Absent editable years SHALL show an empty input; an explicitly stored zero SHALL remain editable.
+
+#### Scenario: No synthetic duration
+
+- **WHEN** program or manual-experience entries have absent, null or zero years
+- **THEN** their lists show no duration placeholder, `0 años` or orphan separator
+
+#### Scenario: Positive and calculated durations
+
+- **WHEN** programs have 1 and 3 years and an experience has 3.5 years
+- **THEN** the labels read `1 año`, `3 años` and `3,5 años` respectively
+
+#### Scenario: Unrelated edit preserves values
+
+- **WHEN** an editor changes an unrelated field in a relation with no years or explicitly zero years
+- **THEN** the write neither converts absent years to zero nor erases an existing zero
+
+### Requirement: Education centre is optional in the editor
+
+The education editor SHALL allow adding an entry without Centro and clearing an existing centre.
+It SHALL retain other required fields and the centre length limit. An empty centre SHALL produce
+no placeholder or stray punctuation in the entry summary.
+
+#### Scenario: Add and clear a centre
+
+- **WHEN** an editor supplies valid education type, degree and status with blank Centro, or
+  clears Centro on an existing entry
+- **THEN** the entry saves immediately and remains centre-free after reload
+
+#### Scenario: Other required fields
+
+- **WHEN** an editor adds education with a missing degree, type or status
+- **THEN** the appropriate Spanish validation error is announced and the entry is not saved
+
+### Requirement: Candidate history is displayed newest first
+
+Education SHALL sort by end year descending, undated last, with stable ties. Experience SHALL
+group current roles first, then sort by end date or start fallback descending; current roles
+use start date. Within each group undated entries SHALL be last, then ties SHALL use start date
+descending, missing starts last, then loaded order. Both modes SHALL use this order without
+writing or mutating the loaded collections merely to sort them.
+
+#### Scenario: Education years and stable ties
+
+- **WHEN** loaded education is 2020, undated, 2024-A and 2024-B
+- **THEN** read and edit lists show 2024-A, 2024-B, 2020, undated
+
+#### Scenario: Experience groups and fallback dates
+
+- **WHEN** loaded experience includes current starts 2022 and 2024, a current undated role,
+  completed ends 2020 and 2023, a non-current start-only 2021 and a non-current undated role
+- **THEN** both modes show current 2024, current 2022, current undated, completed 2023,
+  start-only 2021, completed 2020, non-current undated
+
+#### Scenario: Equal dates
+
+- **WHEN** experience entries have the same effective sort date
+- **THEN** later start dates precede earlier starts, missing starts follow known ones,
+  and entries still tied retain their loaded relative order
+
+#### Scenario: Reordering after a write
+
+- **WHEN** an editor changes a 2020 education end year to 2025 and the write succeeds
+- **THEN** the same entry moves to its new chronological position, subsequent edit/remove
+  actions target its identity, and opening a sorted panel itself sends no write
+
+#### Scenario: Experience state follows identity
+
+- **WHEN** a successful date change moves an experience entry
+- **THEN** edit and disclosure state stays attached to entry identities rather than list positions
+
+### Requirement: Contact validation preserves the user's form
+
+Candidate creation and Datos principales saves SHALL validate optional email and phone values
+before sending a request. Invalid values SHALL produce Spanish field-specific errors, including
+distinct phone character and minimum-digit errors, exposed as an alert at the top of the form.
+Failed validation or writes SHALL retain entered values. Blank contacts SHALL remain valid.
+
+#### Scenario: Invalid contact before request
+
+- **WHEN** a user submits an invalid email, a phone containing letters or an eight-digit phone
+  on create or main-data edit
+- **THEN** no write is sent, the error identifies the field and reason, and the form keeps its values
+
+#### Scenario: Clear invalid legacy contact
+
+- **WHEN** a stored invalid phone is loaded and the user tries to save another main-data field
+- **THEN** saving is refused until the contact is corrected or cleared, without losing the draft
+
+#### Scenario: Unrelated panel remains usable
+
+- **WHEN** a candidate has an invalid legacy contact and an editor changes education or experience
+- **THEN** that relation can save without rewriting or validating the untouched contact fields
+
+#### Scenario: Server rejects the contact
+
+- **WHEN** the API returns a contact-validation problem to the form
+- **THEN** it is presented accessibly in Spanish without including the submitted personal value

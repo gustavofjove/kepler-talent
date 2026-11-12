@@ -88,6 +88,15 @@ describe('CandidateDetailPage', () => {
   };
 
   const loaded = () => screen.findByRole('heading', { level: 1, name: 'Ona Marti' });
+  it('keeps multiline internal observations as literal text', async () => {
+    const notes = 'Line one\n\nLine two <script>alert(1)</script>';
+    bed.api.seed({ id: 'c1', firstName: 'Ona', lastName: 'Marti', notes });
+    await renderAt('/app/candidates/c1');
+    await loaded();
+    const observations = document.querySelector('.candidate-observations');
+    expect(observations?.textContent).toBe(notes);
+    expect(observations?.querySelector('script')).toBeNull();
+  });
   const asEditor = () =>
     ['candidates.update', 'documents.upload'].forEach((permission) => granted.add(permission));
 

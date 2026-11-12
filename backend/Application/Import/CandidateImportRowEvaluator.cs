@@ -217,6 +217,8 @@ public sealed class CandidateImportRowEvaluator(
 
     private static string ColumnOf(string propertyName) => propertyName switch
     {
+        nameof(CreateCandidateCommand.Phone) => CandidateImportContract.Phone,
+        nameof(CreateCandidateCommand.Email) => CandidateImportContract.Email,
         nameof(CreateCandidateCommand.FirstName) => CandidateImportContract.FirstName,
         nameof(CreateCandidateCommand.LastName) => CandidateImportContract.LastName,
         nameof(CreateCandidateCommand.ReceivedAt) => CandidateImportContract.ReceivedAt,

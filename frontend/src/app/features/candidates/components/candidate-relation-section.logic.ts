@@ -50,7 +50,7 @@ const text = (item: PickerItem, field: RelationDetail): string =>
 
 const years = (item: PickerItem): number | undefined => {
   const value = item.details?.['yearsExperience'];
-  return value === undefined || value === '' ? undefined : Number(value);
+  return value == null || value === '' ? undefined : Number(value);
 };
 
 /**
@@ -194,7 +194,7 @@ export function detailText(
   if (detail === 'certification') return text(item, 'certification') || undefined;
   if (detail === 'yearsExperience') {
     const value = years(item);
-    return value === undefined
+    return value === undefined || value === 0
       ? undefined
       : t('candidate.profile.yearsCount', { count: value, years: value });
   }

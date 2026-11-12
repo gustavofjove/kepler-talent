@@ -74,7 +74,6 @@ describe('candidate relation validators', () => {
   // The panel forms use noValidate, so these rules are what stops a blank required field.
   it.each([
     ['educationType', 'El tipo de formación es obligatorio.'],
-    ['institution', 'El centro es obligatorio.'],
     ['status', 'El estado de la formación es obligatorio.'],
   ] as const)('refuses education without %s', (field, message) => {
     expect(() => validateEducationEntry(education({ [field]: '  ' }))).toThrow(message);

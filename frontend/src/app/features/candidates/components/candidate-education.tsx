@@ -1,3 +1,4 @@
+import { sortedEducation } from './candidate-history.logic';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useServices } from '../../../core/di/services-context';
@@ -168,7 +169,7 @@ export function CandidateEducation({ candidate, control }: Props) {
           <p className="empty-state">{t('candidate.profile.education.empty')}</p>
         ) : null}
         <div className="item-list">
-          {education.map((item) => (
+          {sortedEducation(education).map((item) => (
             <div
               className={item.id === editing?.id ? 'item-row is-editing' : 'item-row'}
               key={item.id}

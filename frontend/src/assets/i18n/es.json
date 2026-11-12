@@ -1,5 +1,5 @@
 {
-  "app.title": "Kepler Talento",
+  "app.title": "Kepler Talent",
   "catalogs.management.title": "Catálogos",
   "catalogs.management.subtitle": "Gestiona idiomas, programas, habilidades y listas maestras usadas por toda la app.",
   "catalogs.management.family": "Familia de catálogo",
@@ -898,5 +898,14 @@
   "candidate.profile.documents.upload.hint": "PDF, Word, ODT, RTF, TXT o imagen · máximo 20 MB",
   "candidate.profile.documents.upload.choose": "Seleccionar archivo",
   "candidate.profile.documents.upload.clear": "Quitar archivo",
-  "candidate.profile.documents.upload.submit": "Subir documento"
+  "candidate.profile.documents.upload.submit": "Subir documento",
+  "shell.skip": "Saltar al contenido principal",
+  "shell.tagline": "Gestión interna de candidatos del ecosistema Kepler",
+  "shell.signOut": "Salir",
+  "shell.dismiss": "Cerrar",
+  "shell.notifications": "Notificaciones",
+  "candidate.contact.email": "Introduce un correo electrónico válido.",
+  "candidate.contact.characters": "El teléfono solo puede contener dígitos, +, paréntesis y espacios.",
+  "candidate.contact.short": "El teléfono debe contener al menos 9 dígitos.",
+  "candidate.contact.long": "El valor supera la longitud máxima permitida."
 }

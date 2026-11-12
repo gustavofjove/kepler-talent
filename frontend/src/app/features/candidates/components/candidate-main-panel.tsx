@@ -28,10 +28,12 @@ export function CandidateMainPanel({ candidate, control }: Props) {
   const notifyError = useErrorToast();
   const session = useSessionRetry();
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const urgency = reviewUrgency(candidate.reviewDueAt);
 
   const save = async (draft: CandidateDraft): Promise<void> => {
     setSaving(true);
+    setSaveError('');
     try {
       // The version travels with the aggregate inside the service, so a panel opened before
       // someone else's edit is refused rather than overwriting it, and the draft is kept.
@@ -41,7 +43,7 @@ export function CandidateMainPanel({ candidate, control }: Props) {
     } catch (error) {
       // KTL-46: a session that ended keeps the form; signing in again retries this save.
       if (!session.handle(error, () => save(draft))) {
-        notifyError(error, t('candidate.edit.saveFailure'));
+        setSaveError(notifyError(error, t('candidate.edit.saveFailure')));
       }
     } finally {
       setSaving(false);
@@ -61,6 +63,7 @@ export function CandidateMainPanel({ candidate, control }: Props) {
       {control.editing ? (
         <CandidateForm
           candidate={candidate}
+          saveError={saveError}
           formId={FORM_ID}
           onSave={(draft) => void save(draft)}
           onDirtyChange={control.onDirtyChange}
@@ -99,7 +102,7 @@ export function CandidateMainPanel({ candidate, control }: Props) {
               ) : null}
             </dd>
           </dl>
-          {candidate.notes ? <p>{candidate.notes}</p> : null}
+          {candidate.notes ? <p className="candidate-observations">{candidate.notes}</p> : null}
         </>
       )}
     </CandidatePanel>

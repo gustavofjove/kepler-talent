@@ -30,6 +30,41 @@ namespace KeplerTalento.Tests.IntegrationTests;
 public sealed class CandidateApiTests(PostgreSqlFixture database) : IClassFixture<PostgreSqlFixture>
 {
     [Fact]
+    public async Task Contact_validation_and_empty_centre_round_trip_without_partial_writes()
+    {
+        await ResetAsync();
+        await using var factory = CreateFactory(TestActor.Full);
+        using var client = factory.CreateClient();
+        var create = new CreateCandidateCommand("Ana", "Perez", "", "", "", "", "", "", "", null, null, null);
+        var response = await client.PostAsJsonAsync("/api/candidates", create);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var candidate = (await response.Content.ReadFromJsonAsync<CandidateResponse>())!;
+        var refused = await client.PutAsJsonAsync($"/api/candidates/{candidate.Id}", new UpdateCandidateCommand(
+            candidate.Id, "Changed", "Perez", "123-456-789", "bad", "", "", "", "", "", null, null, null, candidate.Version));
+        Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
+        var unchanged = (await client.GetFromJsonAsync<CandidateResponse>($"/api/candidates/{candidate.Id}"))!;
+        Assert.Equal(candidate.Version, unchanged.Version);
+        Assert.Equal("Ana", unchanged.FirstName);
+        var education = await client.PutAsJsonAsync($"/api/candidates/{candidate.Id}/education", new
+        {
+            version = candidate.Version,
+            education = new[] { new CandidateEducationInput(null, "Grado", "ADE", null, "   ", "Finalizada", 2020, null) },
+        });
+        Assert.Equal(HttpStatusCode.OK, education.StatusCode);
+        var saved = (await education.Content.ReadFromJsonAsync<CandidateResponse>())!;
+        Assert.Equal("", Assert.Single(saved.Education).Institution);
+        var stale = await client.PutAsJsonAsync($"/api/candidates/{candidate.Id}/education", new
+        {
+            version = candidate.Version,
+            education = saved.Education,
+        });
+        Assert.Equal(HttpStatusCode.Conflict, stale.StatusCode);
+        await using var deniedFactory = CreateFactory(TestActor.Reader);
+        using var deniedClient = deniedFactory.CreateClient();
+        Assert.Equal(HttpStatusCode.Forbidden, (await deniedClient.PostAsJsonAsync("/api/candidates", create with { Phone = "invalid" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await deniedClient.PutAsJsonAsync($"/api/candidates/{Guid.NewGuid()}/education", new { version = 0, education = Array.Empty<CandidateEducationInput>() })).StatusCode);
+    }
+    [Fact]
     public async Task Candidate_lifecycle_runs_through_http_application_and_postgresql()
     {
         await ResetAsync();

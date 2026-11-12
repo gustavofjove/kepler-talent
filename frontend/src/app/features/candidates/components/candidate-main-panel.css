@@ -2,6 +2,11 @@
   font-weight: 600;
 }
 
+.candidate-observations {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .candidate-review--overdue {
   color: var(--danger);
 }

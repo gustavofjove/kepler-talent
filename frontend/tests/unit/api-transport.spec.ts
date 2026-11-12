@@ -122,7 +122,7 @@ describe('ApiTransport', () => {
 
   it('downloads with a safe attachment filename and content type', async () => {
     const fetcher = vi.fn().mockResolvedValue(
-      new Response(new Blob(['cv']), {
+      new Response('cv', {
         headers: {
           'content-disposition': 'attachment; filename="..\\candidate.pdf"',
           'content-type': 'application/pdf',

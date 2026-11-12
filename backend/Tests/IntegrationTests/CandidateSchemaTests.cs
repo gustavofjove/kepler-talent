@@ -20,6 +20,29 @@ public sealed class CandidateSchemaTests(PostgreSqlFixture database) : IClassFix
 
     private ApplicationDbContext NewContext() => new(Options);
 
+    [Fact]
+    public async Task Empty_education_centre_round_trips_as_encrypted_non_null_text()
+    {
+        var catalog = await PrepareAsync();
+        var candidateId = Guid.CreateVersion7();
+        var educationId = Guid.CreateVersion7();
+        await using (var write = NewContext())
+        {
+            write.Candidates.Add(NewCandidate(candidateId, DateTimeOffset.UtcNow));
+            write.CandidateEducation.Add(new CandidateEducation(educationId, candidateId,
+                catalog.First(CatalogFamilies.EducationType), catalog.First(CatalogFamilies.EducationStatus),
+                "ADE", "   "));
+            await write.SaveChangesAsync();
+        }
+        await using var read = NewContext();
+        Assert.Equal("", (await read.CandidateEducation.SingleAsync(e => e.Id == educationId)).Institution);
+        await using var connection = new NpgsqlConnection(database.ConnectionString);
+        await connection.OpenAsync();
+        await using var command = new NpgsqlCommand("SELECT \"Institution\" FROM \"CND_CandidateEducation\" WHERE \"Id\" = @id", connection);
+        command.Parameters.AddWithValue("id", educationId);
+        Assert.StartsWith("ktl1.", Assert.IsType<string>(await command.ExecuteScalarAsync()));
+    }
+
     private async Task<CatalogLookup> PrepareAsync()
     {
         await using var setup = NewContext();
