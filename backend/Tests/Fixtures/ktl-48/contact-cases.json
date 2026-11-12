@@ -1,0 +1,92 @@
+[
+  {
+    "email": "",
+    "phone": "",
+    "accepted": true
+  },
+  {
+    "email": "ana.perez+rrhh@example.com",
+    "phone": "+34 (612) 345 678",
+    "accepted": true
+  },
+  {
+    "email": "  ",
+    "phone": "  ",
+    "accepted": true
+  },
+  {
+    "email": "ana",
+    "phone": "",
+    "accepted": false
+  },
+  {
+    "email": "ana@",
+    "phone": "",
+    "accepted": false
+  },
+  {
+    "email": "@example.com",
+    "phone": "",
+    "accepted": false
+  },
+  {
+    "email": "ana@@example.com",
+    "phone": "",
+    "accepted": false
+  },
+  {
+    "email": "Ana <ana@example.com>",
+    "phone": "",
+    "accepted": false
+  },
+  {
+    "email": "",
+    "phone": "61234567",
+    "accepted": false
+  },
+  {
+    "email": "",
+    "phone": "612345678",
+    "accepted": true
+  },
+  {
+    "email": "",
+    "phone": "+(12) 345 678",
+    "accepted": false
+  },
+  {
+    "email": "",
+    "phone": "612-345-678",
+    "accepted": false
+  },
+  {
+    "email": "",
+    "phone": "612.345.678",
+    "accepted": false
+  },
+  {
+    "email": "",
+    "phone": "612345678 ext 1",
+    "accepted": false
+  },
+  {
+    "email": "",
+    "phone": "1111111111111111111111111111111111111111",
+    "accepted": true
+  },
+  {
+    "email": "",
+    "phone": "11111111111111111111111111111111111111111",
+    "accepted": false
+  },
+  {
+    "email": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@example.com",
+    "phone": "",
+    "accepted": true
+  },
+  {
+    "email": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@example.com",
+    "phone": "",
+    "accepted": false
+  }
+]

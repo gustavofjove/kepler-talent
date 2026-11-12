@@ -29,7 +29,7 @@ public sealed class CandidateEducationConfiguration : IEntityTypeConfiguration<C
         builder.ConfigureRelation(Table, candidate => candidate.Education);
         builder.Property(education => education.Degree).IsEncrypted(Table, CandidateTextLimits.Degree, requireText: true).IsRequired();
         builder.Property(education => education.Specialty).IsEncrypted(Table, CandidateTextLimits.Specialty);
-        builder.Property(education => education.Institution).IsEncrypted(Table, CandidateTextLimits.Institution, requireText: true).IsRequired();
+        builder.Property(education => education.Institution).IsEncrypted(Table, CandidateTextLimits.Institution).IsRequired();
         builder.HasCatalogReference(
             education => new { education.EducationTypeId, education.EducationTypeFamily },
             education => education.EducationTypeFamily);

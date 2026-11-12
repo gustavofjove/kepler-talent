@@ -52,9 +52,10 @@
 }
 
 /* The Educación or Experiencia entry currently loaded into the form. */
-.item-row.is-editing {
+.candidate-panel .item-row.is-editing {
   background: var(--fj-orange-pale);
   box-shadow: inset 3px 0 0 var(--primary);
+  padding-block: 12px;
   padding-left: 12px;
 }
 

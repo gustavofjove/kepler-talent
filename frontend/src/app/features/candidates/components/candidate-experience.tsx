@@ -1,3 +1,4 @@
+import { sortedExperience } from './candidate-history.logic';
 import { useEffect, useId, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useServices } from '../../../core/di/services-context';
@@ -211,7 +212,7 @@ export function CandidateExperience({ candidate, control }: Props) {
         {item.sector ? ` (${item.sector})` : ''}
         {/* A current role with a period already reads «2019–actualidad». */}
         {item.isCurrent && !period ? ` · ${t('candidate.profile.experience.currentBadge')}` : ''}
-        {years !== undefined
+        {years !== undefined && years !== 0
           ? ` · ${t('candidate.profile.yearsCount', { count: years, years: formatNumber(years, UP_TO_ONE_DECIMAL) })}`
           : ''}
       </p>
@@ -231,7 +232,7 @@ export function CandidateExperience({ candidate, control }: Props) {
           <p className="empty-state">{t('candidate.profile.experience.empty')}</p>
         ) : null}
         <div className="item-list">
-          {experience.map((item) => {
+          {sortedExperience(experience).map((item) => {
             if (canEdit) {
               return (
                 <div

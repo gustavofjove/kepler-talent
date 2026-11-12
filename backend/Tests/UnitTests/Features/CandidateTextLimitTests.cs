@@ -10,6 +10,13 @@ namespace KeplerTalento.Tests.UnitTests.Features;
 /// </summary>
 public sealed class CandidateTextLimitTests
 {
+    private static string ValidText(string field, int length) => field switch
+    {
+        nameof(CreateCandidateCommand.Phone) => new string('1', length),
+        nameof(CreateCandidateCommand.Email) => new string('a', length - 12) + "@example.com",
+        _ => new string('a', length),
+    };
+
     public static TheoryData<string, int> CandidateFields() => new()
     {
         { nameof(CreateCandidateCommand.FirstName), 120 },
@@ -28,8 +35,8 @@ public sealed class CandidateTextLimitTests
     {
         var validator = new CreateCandidateValidator();
 
-        var atLimit = await validator.ValidateAsync(Create(field, new string('a', limit)));
-        var overLimit = await validator.ValidateAsync(Create(field, new string('a', limit + 1)));
+        var atLimit = await validator.ValidateAsync(Create(field, ValidText(field, limit)));
+        var overLimit = await validator.ValidateAsync(Create(field, ValidText(field, limit + 1)));
 
         Assert.True(atLimit.IsValid);
         var error = Assert.Single(overLimit.Errors);
@@ -41,7 +48,7 @@ public sealed class CandidateTextLimitTests
     [MemberData(nameof(CandidateFields))]
     public async Task Update_applies_the_same_limits(string field, int limit)
     {
-        var overLimit = await new UpdateCandidateValidator().ValidateAsync(Update(field, new string('a', limit + 1)));
+        var overLimit = await new UpdateCandidateValidator().ValidateAsync(Update(field, ValidText(field, limit + 1)));
 
         Assert.Equal(CandidateErrors.FieldTooLong, Assert.Single(overLimit.Errors).ErrorCode);
     }

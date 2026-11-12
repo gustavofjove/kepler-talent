@@ -34,8 +34,9 @@ public sealed class CreateCandidateValidator : AbstractValidator<CreateCandidate
             .WithMessage(CandidateErrors.LastNameRequiredMessage);
         RuleFor(command => command.FirstName).MustFitWithin(CandidateTextLimits.FirstName);
         RuleFor(command => command.LastName).MustFitWithin(CandidateTextLimits.LastName);
-        RuleFor(command => command.Phone).MustFitWithin(CandidateTextLimits.Phone);
-        RuleFor(command => command.Email).MustFitWithin(CandidateTextLimits.Email);
+        RuleFor(command => command.Phone).ContactLength(CandidateTextLimits.Phone);
+        RuleFor(command => command.Email).ContactLength(CandidateTextLimits.Email).ValidEmail();
+        CandidateContactRules.Phone(this, command => command.Phone);
         RuleFor(command => command.Location).MustFitWithin(CandidateTextLimits.Location);
         RuleFor(command => command.Province).MustFitWithin(CandidateTextLimits.Province);
         RuleFor(command => command.Country).MustFitWithin(CandidateTextLimits.Country);

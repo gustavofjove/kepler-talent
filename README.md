@@ -1,4 +1,4 @@
-# Kepler Talento
+# Kepler Talent
 
 Aplicación interna de RR. HH. para gestionar candidatos y CVs. La interfaz actual es una
 SPA React; KTL-5 añade la plataforma objetivo ASP.NET Core, PostgreSQL, almacenamiento

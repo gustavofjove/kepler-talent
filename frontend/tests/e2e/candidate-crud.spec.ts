@@ -5,6 +5,46 @@ import { CANDIDATE_PAGE_URL, editPanel, savePanel } from './support/candidate-pa
 test.use({ storageState: authFile('rrhh_admin') });
 
 test.describe('Candidate CRUD', () => {
+  test('validates contacts and serves the Kepler Talent brand locally', async ({ page }) => {
+    await page.goto('/app/candidates/new');
+    await expect(page).toHaveTitle('Kepler Talent');
+    await expect(page.locator('.brand strong')).toHaveText('Kepler Talent');
+    await page.fill('input[name="firstName"]', `Contact${Date.now()}`);
+    await page.fill('input[name="lastName"]', 'Test');
+    await page.fill('input[name="email"]', 'invalid');
+    await page.click('button[type="submit"]');
+    await expect(page.getByRole('alert')).toBeVisible();
+    await page.fill('input[name="email"]', '');
+    await page.fill('input[name="phone"]', '612-345-678');
+    await page.click('button[type="submit"]');
+    await expect(page.getByRole('alert')).toBeVisible();
+    await page.fill('input[name="phone"]', '12345678');
+    await page.click('button[type="submit"]');
+    await expect(page.getByRole('alert')).toBeVisible();
+    for (const icon of ['/favicon-150.png', '/favicon-300.png']) {
+      const response = await page.request.get(icon);
+      expect(response.ok()).toBeTruthy();
+      expect(response.headers()['content-type']).toContain('image/png');
+    }
+    await page.fill('input[name="phone"]', '+34 (612) 345 678');
+    await page.route(/\/api\/candidates$/, (route) =>
+      route.fulfill({
+        status: 400,
+        contentType: 'application/problem+json',
+        body: JSON.stringify({
+          status: 400,
+          code: 'validation.failed',
+          errors: [{ property: 'Phone', code: 'candidate.phone.too_short' }],
+        }),
+      }),
+    );
+    await page.click('button[type="submit"]');
+    await expect(page.getByRole('alert')).toBeVisible();
+    await expect(page.locator('input[name="phone"]')).toHaveValue('+34 (612) 345 678');
+    await page.unroute(/\/api\/candidates$/);
+    await page.click('button[type="submit"]');
+    await expect(page).toHaveURL(CANDIDATE_PAGE_URL);
+  });
   test('creates, edits, and logically deactivates a candidate', async ({ page }) => {
     const uniqueSuffix = Date.now().toString();
     const firstName = `Test${uniqueSuffix}`;

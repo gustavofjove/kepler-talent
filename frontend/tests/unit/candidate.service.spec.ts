@@ -15,6 +15,38 @@ describe('CandidateService', () => {
     ({ service, api } = createCandidateTestBed());
   });
 
+  it('rejects malformed contacts before calling the API and keeps the caller draft intact', async () => {
+    const create = vi.spyOn(api, 'create');
+    const draft = {
+      ...EMPTY_CANDIDATE_DRAFT,
+      firstName: 'Ana',
+      lastName: 'Perez',
+      phone: '123-456-789',
+    };
+    await expect(service.create(draft)).rejects.toThrow();
+    expect(create).not.toHaveBeenCalled();
+    expect(draft.phone).toBe('123-456-789');
+    api.seed({ id: 'contact', firstName: 'Ana' });
+    await service.ensureAggregate('contact');
+    const update = vi.spyOn(api, 'update');
+    await expect(service.update('contact', draft)).rejects.toThrow();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('normalizes contacts on a valid create without changing the input', async () => {
+    const draft = {
+      ...EMPTY_CANDIDATE_DRAFT,
+      firstName: 'Ana',
+      lastName: 'Perez',
+      phone: ' +34 (612) 345 678 ',
+      email: ' ana@example.com ',
+    };
+    const candidate = await service.create(draft);
+    expect(candidate.phone).toBe('+34 (612) 345 678');
+    expect(candidate.email).toBe('ana@example.com');
+    expect(draft.email).toBe(' ana@example.com ');
+  });
+
   const listQuery = {
     page: 1,
     pageSize: 25,

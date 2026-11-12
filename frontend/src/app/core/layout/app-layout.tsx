@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router';
 import { ConfirmDialog } from '../../shared/components/confirm-dialog';
 import { SessionExpiredDialog } from '../auth/session-expired-dialog';
@@ -7,6 +8,7 @@ import { PrimaryNav } from './primary-nav';
 import './app-layout.css';
 
 export function AppLayout() {
+  const { t } = useTranslation();
   const { authService, toastService } = useServices();
   const profile = useSignal(authService.profile);
   const messages = useSignal(toastService.messages);
@@ -14,12 +16,12 @@ export function AppLayout() {
   return (
     <div className="shell">
       <a className="skip-link" href="#main-content">
-        Saltar al contenido principal
+        {t('shell.skip')}
       </a>
       <header>
         <div className="brand">
-          <strong>Kepler Talento</strong>
-          <span className="muted">Gestión interna de candidatos del ecosistema Kepler</span>
+          <strong>{t('app.title')}</strong>
+          <span className="muted">{t('shell.tagline')}</span>
         </div>
         <PrimaryNav />
         <div className="user">
@@ -30,14 +32,14 @@ export function AppLayout() {
             data-testid="sign-out"
             onClick={() => authService.signOut()}
           >
-            Salir
+            {t('shell.signOut')}
           </button>
         </div>
       </header>
       <main id="main-content" tabIndex={-1}>
         <Outlet />
       </main>
-      <div className="toasts" role="region" aria-label="Notificaciones">
+      <div className="toasts" role="region" aria-label={t('shell.notifications')}>
         {messages.map((message) => (
           <article className="toast" role="status" aria-live="polite" key={message.id}>
             <div>{message.text}</div>
@@ -46,7 +48,7 @@ export function AppLayout() {
               type="button"
               onClick={() => toastService.dismiss(message.id)}
             >
-              Cerrar
+              {t('shell.dismiss')}
             </button>
           </article>
         ))}

@@ -97,7 +97,7 @@ public sealed class SetCandidateEducationValidator : AbstractValidator<SetCandid
         {
             item.RuleFor(education => education.Degree).MustHaveText().MustFitWithin(CandidateTextLimits.Degree);
             item.RuleFor(education => education.Specialty).MustFitWithin(CandidateTextLimits.Specialty);
-            item.RuleFor(education => education.Institution).MustHaveText().MustFitWithin(CandidateTextLimits.Institution);
+            item.RuleFor(education => education.Institution).MustFitWithin(CandidateTextLimits.Institution);
         });
 }
 

@@ -78,7 +78,6 @@ export function validateEducationEntry(entry: CandidateEducation): void {
   // In form order, so the first message names the first field to fill in.
   requireText(entry.educationType, 'candidate.profile.education.typeRequired');
   requireText(entry.degree, 'candidate.profile.education.required');
-  requireText(entry.institution, 'candidate.profile.education.institutionRequired');
   requireText(entry.status, 'candidate.profile.education.statusRequired');
   const currentYear = new Date().getFullYear();
   if (entry.endYear !== undefined && (entry.endYear < 1950 || entry.endYear > currentYear + 1)) {

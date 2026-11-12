@@ -1,3 +1,4 @@
+import { contactError, validatedContacts } from './candidate-contact.rules';
 import { signal } from '../../../core/state/signal';
 import { AppError, toAppError } from '../../../shared/models/error.models';
 import {
@@ -120,11 +121,13 @@ export class CandidateService {
   }
 
   async create(draft: CandidateDraft): Promise<Candidate> {
-    return this.absorb(await this.api.create(draft));
+    return this.absorb(await this.api.create(validatedContacts(draft)).catch(contactError));
   }
 
   async update(id: string, draft: CandidateDraft): Promise<Candidate> {
-    return this.absorb(await this.api.update(id, draft, this.versionOf(id)));
+    return this.absorb(
+      await this.api.update(id, validatedContacts(draft), this.versionOf(id)).catch(contactError),
+    );
   }
 
   /**
